@@ -10,6 +10,8 @@ const int LEFT = 3;
 const char WALL = 219; // █
 const char SPACE = 32; // | |<- Space
 const char PEOPLE = 64; // @
+const int SUBGRID_SIZE = 25;
+
 //----GLOBAL VARIABLES------------------------------------------------
 char** grid;
 //----FUNCTION PROTOTYPES---------------------------------------------
@@ -108,8 +110,7 @@ void BreakWalls() {
 	int numOfWallsBroken = 200;
 	int location;
 	int brokeWall;
-	int x = 0;
-	int y = 0;
+	int x, y;
 
 	for (int i = 0; i < numOfWallsBroken; i++) {
 		brokeWall = 0;
@@ -132,42 +133,119 @@ void BreakWalls() {
 	}
 }
 
-void InsertPeople() {
-	int numOfPeople = 20;
-	bool placed = false;
-	int x = 0;
-	int y = 0;
+//void InsertPeople() {
+//
+//	int numOfPeople = 20;
+//
+//	bool placed = false;
+//
+//	int x = 0;
+//
+//	int y = 0;
+//
+//
+//
+//	int newX;
+//
+//	int newY;
+//
+//
+//
+//	int dx[] = { -1, -1, -1, 0, 0, 1, 1, 1 };
+//
+//	int dy[] = { -1, 0, 1, -1, 1, -1, 0, 1 };
+//
+//
+//
+//	for (int i = 0; i < numOfPeople; i++) {
+//
+//		placed = false;
+//
+//
+//
+//		x = rand() % (GRID_WIDTH - 1) + 1; // Random location inside the border of the maze
+//
+//		y = rand() % (GRID_HEIGHT - 1) + 1;
+//
+//		if (grid[x][y] == SPACE)
+//
+//		{
+//
+//			grid[x][y] = PEOPLE;
+//
+//			placed = true;
+//
+//		}
+//
+//		else {
+//
+//			// Try surrounding positions
+//
+//
+//
+//			for (int j = 0; j < 8 && !placed; ++j) {
+//
+//				newX = x + dx[j];
+//
+//				newY = y + dy[j];
+//
+//
+//
+//				if (IsInMaze(newX, newY) && grid[newX][newY] == SPACE) {
+//
+//					// Insert People
+//
+//					grid[x][y] = PEOPLE;
+//
+//					placed = true;
+//
+//				}
+//
+//			}
+//
+//		}
+//
+//	}
+//
+//}
 
-	int newX;
-	int newY;
+void InsertPeople() {
+	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE); // (101/25)^2=16
+	bool placed = false;
+	int x, y;
+	int newX, newY;
 
 	int dx[] = { -1, -1, -1, 0, 0, 1, 1, 1 };
 	int dy[] = { -1, 0, 1, -1, 1, -1, 0, 1 };
 
-	for (int i = 0; i < numOfPeople; i++) {
+	for (int i = 0; i < numOfSections; i++) {
 		placed = false;
 
-		x = rand() % (GRID_WIDTH - 1) + 1; // Random location inside the border of the maze
-		y = rand() % (GRID_HEIGHT - 1) + 1;
-		if (grid[x][y] == SPACE)
-		{
+		// Calculate subgrid coordinates
+		int subgrid_x = i % (GRID_WIDTH / SUBGRID_SIZE);
+		int subgrid_y = i / (GRID_WIDTH / SUBGRID_SIZE);
+
+		// Generate a random position within the subgrid
+		x = subgrid_x * SUBGRID_SIZE + rand() % SUBGRID_SIZE;
+		y = subgrid_y * SUBGRID_SIZE + rand() % SUBGRID_SIZE;
+
+		if (grid[x][y] == SPACE) {
 			grid[x][y] = PEOPLE;
 			placed = true;
 		}
 		else {
 			// Try surrounding positions
-
-			for (int j = 0; j < 8 && !placed; ++j) {
+			for (int j = 0; j < 8 && !placed; j++) {
 				newX = x + dx[j];
 				newY = y + dy[j];
 
-				if (IsInMaze(newX, newY) && grid[newX][newY]==SPACE) {
-					// Insert People
-					grid[x][y] = PEOPLE;
+				if (IsInMaze(newX, newY) && grid[newX][newY] == SPACE) {
+					grid[newX][newY] = PEOPLE;
 					placed = true;
 				}
 			}
 		}
+		
 	}
 }
 
