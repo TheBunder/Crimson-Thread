@@ -7,17 +7,19 @@ const int DOWN = 0;
 const int RIGHT = 1;
 const int UP = 2;
 const int LEFT = 3;
-const char WALL = 219;
-const char SPACE = 32;
+const char WALL = 219; // █
+const char SPACE = 32; // | |<- Space
+const char PEOPLE = 64; // @
 //----GLOBAL VARIABLES------------------------------------------------
 char** grid;
 //----FUNCTION PROTOTYPES---------------------------------------------
-void ResetGrid();
-int IsInArrayBounds(int x, int y);
-void Visit(int x, int y);
-void BreakWalls();
-void RedoWalls();
-void PrintGrid();
+void ResetGrid(); //Fill the array with the WALL sign
+int	 IsInArrayBounds(int x, int y); // Check if the x and y points are in the array
+void Visit(int x, int y); // Move in the array and make a peath (The main method to creat the maze)
+void BreakWalls(); // After the maze was made it breaks aditional paths
+void RedoWalls(); // Convert the walls from the difult version to a better loking tiles
+void InsertPeople(); // Add people (Hostages and\or kidnappers) to the maze
+void PrintGrid(); // Print the array
 //----FUNCTIONS-------------------------------------------------------
 void generate(char** gridI)
 {
@@ -28,6 +30,7 @@ void generate(char** gridI)
 	Visit(1, 1);
 	BreakWalls();
 	RedoWalls();
+	InsertPeople();
 	PrintGrid();
 }
 
@@ -42,7 +45,6 @@ void ResetGrid() {
 
 int IsInArrayBounds(int x, int y)
 {
-
 	// Returns "true" if x and y are both in-bounds.
 	if (x < 0 || x >= GRID_WIDTH) return false;
 	if (y < 0 || y >= GRID_HEIGHT) return false;
@@ -59,13 +61,13 @@ int IsInMaze(int x, int y)
 
 void Visit(int x, int y) {
 	// Set my current location to be an empty passage.
-	grid[y][x] = ' ';
+	grid[y][x] = SPACE;
 
 	// Create a local array containing the 4 directions and shuffle their order.
 	int dirs[4] = { DOWN, RIGHT, UP, LEFT };
 	for (int i = 0; i < 4; ++i) {
 		int r = rand() % 4;
-		dirs[r] = dirs[r] ^ dirs[i];
+		dirs[r] = dirs[r] ^ dirs[i]; // Switch betwin two random elements
 		dirs[i] = dirs[r] ^ dirs[i];
 		dirs[r] = dirs[r] ^ dirs[i];
 	}
@@ -85,7 +87,7 @@ void Visit(int x, int y) {
 
 		if (x2 >= 0 && x2 < GRID_WIDTH && y2 >= 0 && y2 < GRID_HEIGHT) { // In-bounds check
 			if (grid[y2][x2] == WALL) {
-				grid[y + dy][x + dx] = ' '; // Knock down the wall
+				grid[y + dy][x + dx] = SPACE; // Knock down the wall
 				Visit(x2, y2);
 			}
 		}
@@ -126,9 +128,49 @@ void BreakWalls() {
 		}
 
 		// Break wall
-		grid[x][y] = ' ';
+		grid[x][y] = SPACE;
 	}
 }
+
+void InsertPeople() {
+	int numOfPeople = 20;
+	bool placed = false;
+	int x = 0;
+	int y = 0;
+
+	int newX;
+	int newY;
+
+	int dx[] = { -1, -1, -1, 0, 0, 1, 1, 1 };
+	int dy[] = { -1, 0, 1, -1, 1, -1, 0, 1 };
+
+	for (int i = 0; i < numOfPeople; i++) {
+		placed = false;
+
+		x = rand() % (GRID_WIDTH - 1) + 1; // Random location inside the border of the maze
+		y = rand() % (GRID_HEIGHT - 1) + 1;
+		if (grid[x][y] == SPACE)
+		{
+			grid[x][y] = PEOPLE;
+			placed = true;
+		}
+		else {
+			// Try surrounding positions
+
+			for (int j = 0; j < 8 && !placed; ++j) {
+				newX = x + dx[j];
+				newY = y + dy[j];
+
+				if (IsInMaze(newX, newY) && grid[newX][newY]==SPACE) {
+					// Insert People
+					grid[x][y] = PEOPLE;
+					placed = true;
+				}
+			}
+		}
+	}
+}
+
 
 int GetWallPositionValue(int x, int y) {
 	return (grid[x + 1][y] != SPACE) * 1 + (grid[x][y + 1] != SPACE) * 2
