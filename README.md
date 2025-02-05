@@ -2,6 +2,8 @@
 
 This project simulates the exploration of a maze by multiple suldgiers, where each suldger group aims to people located at various points within the maze while keaping themself safe. 
 
+This project is being developed as part of a 13th-grade academic undertaking. The current version is a work in progress, and significant development remains.
+
 # Project Goals:
 
 * Implement a multi-agent system for maze exploration.
@@ -41,10 +43,6 @@ This project simulates the exploration of a maze by multiple suldgiers, where ea
 * Investigate the impact of different reward distributions.
 * Extend the simulation to handle dynamic environments.
 
-# Note:
-
-This project is being developed as part of a 13th-grade academic undertaking. The current version is a work in progress, and significant development remains.
-
-# ScreenShot
+# Screenshot
 
 ![MazeResized](https://github.com/user-attachments/assets/b4f763be-28fe-47c0-bb6d-e7e3e66a41de)
