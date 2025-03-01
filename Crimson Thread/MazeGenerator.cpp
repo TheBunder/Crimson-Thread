@@ -10,7 +10,7 @@ const int LEFT = 3;
 const char WALL = 219; // █
 const char SPACE = 32; // | |<- Space
 const char PEOPLE = 64; // @
-const int SUBGRID_SIZE = 25;
+const int SUBGRID_SIZE = GRID_SIZE/4;
 
 //----GLOBAL VARIABLES------------------------------------------------
 char** grid;
@@ -107,7 +107,7 @@ int IsBrakeble(int x, int y) {
 }
 
 void BreakWalls() {
-	int numOfWallsBroken = 200;
+	int numOfWallsBroken = GRID_SIZE*2;
 	int location;
 	int brokeWall;
 	int x, y;
@@ -132,82 +132,6 @@ void BreakWalls() {
 		grid[x][y] = SPACE;
 	}
 }
-
-//void InsertPeople() {
-//
-//	int numOfPeople = 20;
-//
-//	bool placed = false;
-//
-//	int x = 0;
-//
-//	int y = 0;
-//
-//
-//
-//	int newX;
-//
-//	int newY;
-//
-//
-//
-//	int dx[] = { -1, -1, -1, 0, 0, 1, 1, 1 };
-//
-//	int dy[] = { -1, 0, 1, -1, 1, -1, 0, 1 };
-//
-//
-//
-//	for (int i = 0; i < numOfPeople; i++) {
-//
-//		placed = false;
-//
-//
-//
-//		x = rand() % (GRID_WIDTH - 1) + 1; // Random location inside the border of the maze
-//
-//		y = rand() % (GRID_HEIGHT - 1) + 1;
-//
-//		if (grid[x][y] == SPACE)
-//
-//		{
-//
-//			grid[x][y] = PEOPLE;
-//
-//			placed = true;
-//
-//		}
-//
-//		else {
-//
-//			// Try surrounding positions
-//
-//
-//
-//			for (int j = 0; j < 8 && !placed; ++j) {
-//
-//				newX = x + dx[j];
-//
-//				newY = y + dy[j];
-//
-//
-//
-//				if (IsInMaze(newX, newY) && grid[newX][newY] == SPACE) {
-//
-//					// Insert People
-//
-//					grid[x][y] = PEOPLE;
-//
-//					placed = true;
-//
-//				}
-//
-//			}
-//
-//		}
-//
-//	}
-//
-//}
 
 void InsertPeople() {
 	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE); // (101/25)^2=16
