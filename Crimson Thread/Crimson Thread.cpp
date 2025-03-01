@@ -10,6 +10,5 @@ int main()
 		grid[i] = (char*)malloc(GRID_HEIGHT * sizeof(char));
 	}
     generate(grid);
-
-	//char a[6][6] = { {221,} }
+	PrintGrid(grid);
 }

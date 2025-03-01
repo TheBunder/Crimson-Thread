@@ -10,33 +10,31 @@ const int LEFT = 3;
 const char WALL = 219; // █
 const char SPACE = 32; // | |<- Space
 const char PEOPLE = 64; // @
-const int SUBGRID_SIZE = GRID_SIZE/4;
+const int SUBGRID_SIZE = GRID_SIZE / 4;
 
 //----GLOBAL VARIABLES------------------------------------------------
-char** grid;
+//char** grid;
 //----FUNCTION PROTOTYPES---------------------------------------------
-void ResetGrid(); //Fill the array with the WALL sign
+void ResetGrid(char** grid); //Fill the array with the WALL sign
 int	 IsInArrayBounds(int x, int y); // Check if the x and y points are in the array
-void Visit(int x, int y); // Move in the array and make a peath (The main method to creat the maze)
-void BreakWalls(); // After the maze was made it breaks aditional paths
-void RedoWalls(); // Convert the walls from the difult version to a better loking tiles
-void InsertPeople(); // Add people (Hostages and\or kidnappers) to the maze
-void PrintGrid(); // Print the array
+void Visit(int x, int y, char** grid); // Move in the array and make a peath (The main method to creat the maze)
+void BreakWalls(char** grid); // After the maze was made it breaks aditional paths
+void RedoWalls(char** grid); // Convert the walls from the difult version to a better loking tiles
+void InsertPeople(char** grid); // Add people (Hostages and\or kidnappers) to the maze
+void PrintGrid(char** grid); // Print the array
 //----FUNCTIONS-------------------------------------------------------
-void generate(char** gridI)
+void generate(char** grid)
 {
-	grid = gridI;
 	// Starting point and top-level control.
 	srand(time(0)); // seed random number generator.
-	ResetGrid();
-	Visit(1, 1);
-	BreakWalls();
-	RedoWalls();
-	InsertPeople();
-	PrintGrid();
+	ResetGrid(grid);
+	Visit(1, 1, grid);
+	BreakWalls(grid);
+	RedoWalls(grid);
+	InsertPeople(grid);
 }
 
-void ResetGrid() {
+void ResetGrid(char** grid) {
 	// Fills the grid with walls.
 	for (int y = 0; y < GRID_HEIGHT; ++y) {
 		for (int x = 0; x < GRID_WIDTH; ++x) {
@@ -61,7 +59,7 @@ int IsInMaze(int x, int y)
 	return true;
 }
 
-void Visit(int x, int y) {
+void Visit(int x, int y, char** grid) {
 	// Set my current location to be an empty passage.
 	grid[y][x] = SPACE;
 
@@ -90,13 +88,13 @@ void Visit(int x, int y) {
 		if (x2 >= 0 && x2 < GRID_WIDTH && y2 >= 0 && y2 < GRID_HEIGHT) { // In-bounds check
 			if (grid[y2][x2] == WALL) {
 				grid[y + dy][x + dx] = SPACE; // Knock down the wall
-				Visit(x2, y2);
+				Visit(x2, y2, grid);
 			}
 		}
 	}
 }
 
-int IsBrakeble(int x, int y) {
+int IsBrakeble(int x, int y, char** grid) {
 	if (!IsInMaze(x, y)) {
 		return false;
 	}
@@ -106,7 +104,7 @@ int IsBrakeble(int x, int y) {
 			(grid[x + 1][y] == WALL || grid[x - 1][y] == WALL)));
 }
 
-void BreakWalls() {
+void BreakWalls(char** grid) {
 	int numOfWallsBroken = GRID_SIZE*2;
 	int location;
 	int brokeWall;
@@ -120,7 +118,7 @@ void BreakWalls() {
 			location %= (GRID_WIDTH * GRID_HEIGHT); // Keaps in the grid at all the iterations
 			x = location % GRID_WIDTH;
 			y = location / GRID_WIDTH;
-			if (grid[x][y] == WALL && IsBrakeble(x, y))
+			if (grid[x][y] == WALL && IsBrakeble(x, y, grid))
 			{
 				brokeWall = 1;
 			}
@@ -133,7 +131,7 @@ void BreakWalls() {
 	}
 }
 
-void InsertPeople() {
+void InsertPeople(char** grid) {
 	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE); // (101/25)^2=16
 	bool placed = false;
 	int x, y;
@@ -174,16 +172,16 @@ void InsertPeople() {
 }
 
 
-int GetWallPositionValue(int x, int y) {
+int GetWallPositionValue(int x, int y, char** grid) {
 	return (grid[x + 1][y] != SPACE) * 1 + (grid[x][y + 1] != SPACE) * 2
 		+ (grid[x - 1][y] != SPACE) * 4 + (grid[x][y - 1] != SPACE) * 8;
 }
 
-void RedoInnerWalls() {
+void RedoInnerWalls(char** grid) {
 	for (int y = 1; y < GRID_HEIGHT - 1; y++) {
 		for (int x = 1; x < GRID_WIDTH - 1; x++) {
 			if (grid[x][y] == WALL) {
-				switch (GetWallPositionValue(x, y)) {
+				switch (GetWallPositionValue(x, y, grid)) {
 				case 0: case 1: case 4: case 5:
 					grid[x][y] = MazeChar::HorizontalWall;
 					break;
@@ -225,7 +223,7 @@ void RedoInnerWalls() {
 	}
 }
 
-void RedoOuterWalls() {
+void RedoOuterWalls(char** grid) {
 	for (int y = 1; y < GRID_HEIGHT - 1; y++) {
 		//Left walls
 		if (grid[1][y] == SPACE) {
@@ -266,12 +264,12 @@ void RedoOuterWalls() {
 	grid[0][GRID_HEIGHT - 1] = MazeChar::TopLeftCorner;
 }
 
-void RedoWalls() {
-	RedoInnerWalls();
-	RedoOuterWalls();
+void RedoWalls(char** grid) {
+	RedoInnerWalls(grid);
+	RedoOuterWalls(grid);
 }
 
-void PrintGrid() {
+void PrintGrid(char** grid) {
 	for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
 		for (int x = 0; x < GRID_WIDTH; x++) {
 			putchar(grid[x][y]);
