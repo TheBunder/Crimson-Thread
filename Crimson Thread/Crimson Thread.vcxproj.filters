@@ -21,12 +21,18 @@
     <ClCompile Include="MazeGenerator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="HostageStation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MazeGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mazeChars.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HostageStation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -128,9 +128,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Crimson Thread.cpp" />
+    <ClCompile Include="HostageStation.cpp" />
     <ClCompile Include="MazeGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="HostageStation.h" />
     <ClInclude Include="MazeGenerator.h" />
     <ClInclude Include="mazeChars.h" />
   </ItemGroup>

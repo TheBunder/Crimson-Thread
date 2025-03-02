@@ -1,29 +1,28 @@
-﻿#include <iostream>
-#include "MazeGenerator.h"
-#include "mazeChars.h"
+﻿#include "MazeGenerator.h"
 using namespace std;
 //----CONSTANTS-------------------------------------------------------
-const int DOWN = 0;
-const int RIGHT = 1;
-const int UP = 2;
-const int LEFT = 3;
-const char WALL = 219; // █
-const char SPACE = 32; // | |<- Space
-const char PEOPLE = 64; // @
-const int SUBGRID_SIZE = GRID_SIZE / 4;
+const int	DOWN		 = 0;
+const int	RIGHT		 = 1;
+const int	UP			 = 2;
+const int	LEFT		 = 3;
+const char	WALL		 = 219;			// █
+const char	SPACE		 = 32;			// | |<- Space
+const char	PEOPLE		 = 64;			// @
+const char	RoutePoint	 = 82;			// R
 
 //----GLOBAL VARIABLES------------------------------------------------
-//char** grid;
+
 //----FUNCTION PROTOTYPES---------------------------------------------
-void ResetGrid(char** grid); //Fill the array with the WALL sign
-int	 IsInArrayBounds(int x, int y); // Check if the x and y points are in the array
-void Visit(int x, int y, char** grid); // Move in the array and make a peath (The main method to creat the maze)
-void BreakWalls(char** grid); // After the maze was made it breaks aditional paths
-void RedoWalls(char** grid); // Convert the walls from the difult version to a better loking tiles
-void InsertPeople(char** grid); // Add people (Hostages and\or kidnappers) to the maze
-void PrintGrid(char** grid); // Print the array
+void ResetGrid(char** grid);			//Fill the array with the WALL sign
+int	 IsInArrayBounds(int x, int y);		// Check if the x and y points are in the array
+void Visit(int x, int y, char** grid);	// Move in the array and make a peath (The main method to creat the maze)
+void BreakWalls(char** grid);			// After the maze was made it breaks aditional paths
+void RedoWalls(char** grid);			// Convert the walls from the difult version to a better loking tiles
+void InsertHostages(char** grid, HostageStation* HostageStations);			// Add people (Hostages and\or kidnappers) to the maze
+void InsertRoutePoints(char** grid);	// Add route points to the maze
+void PrintGrid(char** grid);			// Print the array
 //----FUNCTIONS-------------------------------------------------------
-void generate(char** grid)
+void generate(char** grid, HostageStation* HostageStations)
 {
 	// Starting point and top-level control.
 	srand(time(0)); // seed random number generator.
@@ -31,7 +30,8 @@ void generate(char** grid)
 	Visit(1, 1, grid);
 	BreakWalls(grid);
 	RedoWalls(grid);
-	InsertPeople(grid);
+	InsertHostages(grid, HostageStations);
+	InsertRoutePoints(grid);
 }
 
 void ResetGrid(char** grid) {
@@ -131,8 +131,8 @@ void BreakWalls(char** grid) {
 	}
 }
 
-void InsertPeople(char** grid) {
-	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE); // (101/25)^2=16
+void InsertHostages(char** grid, HostageStation* HostageStations) {
+	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
 	bool placed = false;
 	int x, y;
 	int newX, newY;
@@ -167,10 +167,56 @@ void InsertPeople(char** grid) {
 				}
 			}
 		}
-		
+
+		// Create a new HostageStation object and store it in the array
+		if (placed) {
+			HostageStations[i] = HostageStation(x, y, i, (double)(rand() % 101)/100,
+				rand() % 10 + 1 , (double)(rand() % 71) / 100, (double)(rand() % 41) / 100);
+		}
+		else {
+			HostageStations[i] = HostageStation(-1, -1, i, 0.0, 0, 0.0, 0.0); // if not placed put -1,-1
+		}
 	}
 }
 
+void InsertRoutePoints(char** grid) {
+	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
+	bool placed = false;
+	int x, y;
+	int newX, newY;
+
+	int dx[] = { -1, -1, -1, 0, 0, 1, 1, 1 };
+	int dy[] = { -1, 0, 1, -1, 1, -1, 0, 1 };
+
+	for (int i = 0; i < numOfSections; i++) {
+		placed = false;
+
+		// Calculate subgrid coordinates
+		int subgrid_x = i % (GRID_WIDTH / SUBGRID_SIZE);
+		int subgrid_y = i / (GRID_WIDTH / SUBGRID_SIZE);
+
+		// Calculate the middle of the subgrid
+		x = subgrid_x * SUBGRID_SIZE + SUBGRID_SIZE / 2;
+		y = subgrid_y * SUBGRID_SIZE + SUBGRID_SIZE / 2;
+
+		if (IsInMaze(x, y) && grid[x][y] == SPACE) {
+			grid[x][y] = RoutePoint; // Use the RoutePoint character
+			placed = true;
+		}
+		else {
+			// Try surrounding positions
+			for (int j = 0; j < 8 && !placed; j++) {
+				newX = x + dx[j];
+				newY = y + dy[j];
+
+				if (IsInMaze(newX, newY) && grid[newX][newY] == SPACE) {
+					grid[newX][newY] = RoutePoint; // Use the RoutePoint character
+					placed = true;
+				}
+			}
+		}
+	}
+}
 
 int GetWallPositionValue(int x, int y, char** grid) {
 	return (grid[x + 1][y] != SPACE) * 1 + (grid[x][y + 1] != SPACE) * 2
