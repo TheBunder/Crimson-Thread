@@ -134,7 +134,7 @@
   <ItemGroup>
     <ClInclude Include="HostageStation.h" />
     <ClInclude Include="MazeGenerator.h" />
-    <ClInclude Include="mazeChars.h" />
+    <ClInclude Include="MazeChars.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -13,3 +13,14 @@ double HostageStation::getHostageChance() const { return hostageChance; }
 int HostageStation::getNumHostages() const { return numHostages; }
 double HostageStation::getKidnapperChance() const { return kidnapperChance; }
 double HostageStation::getSoldierLossChance() const { return soldierLossChance; }
+
+void HostageStation::printInfo() const {
+    printf("Hostage Station Info:\n");
+    printf("  X: %d, Y: %d\n", x, y);
+    printf("  Subgrid: %d\n", subgridAffiliation);
+    printf("  Hostage Chance: %.2f\n", hostageChance);
+    printf("  Number of Hostages: %d\n", numHostages);
+    printf("  Kidnapper Chance: %.2f\n", kidnapperChance);
+    printf("  Soldier Loss Chance: %.2f\n", soldierLossChance);
+    printf("--------------------------\n");
+}

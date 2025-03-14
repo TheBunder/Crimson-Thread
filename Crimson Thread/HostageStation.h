@@ -1,5 +1,8 @@
 #ifndef HOSTAGESTATION_H
 #define HOSTAGESTATION_H
+
+#include <stdio.h> // Included for printing
+
 class HostageStation {
 private:
     int x;
@@ -23,5 +26,9 @@ public:
     int getNumHostages() const;
     double getKidnapperChance() const;
     double getSoldierLossChance() const;
+
+    // Print Info Method
+    void printInfo() const;
 };
+
 #endif // HOSTAGESTATION_H

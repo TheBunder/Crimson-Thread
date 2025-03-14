@@ -1,5 +1,7 @@
-﻿#include "MazeGenerator.h"
-using namespace std;
+﻿//----INCLUDES--------------------------------------------------------
+#include "MazeGenerator.h"
+#include <stdio.h>
+
 //----CONSTANTS-------------------------------------------------------
 const int	DOWN		 = 0;
 const int	RIGHT		 = 1;
@@ -10,17 +12,17 @@ const char	SPACE		 = 32;			// | |<- Space
 const char	PEOPLE		 = 64;			// @
 const char	RoutePoint	 = 82;			// R
 
-//----GLOBAL VARIABLES------------------------------------------------
-
 //----FUNCTION PROTOTYPES---------------------------------------------
 void ResetGrid(char** grid);			//Fill the array with the WALL sign
 int	 IsInArrayBounds(int x, int y);		// Check if the x and y points are in the array
 void Visit(int x, int y, char** grid);	// Move in the array and make a peath (The main method to creat the maze)
 void BreakWalls(char** grid);			// After the maze was made it breaks aditional paths
 void RedoWalls(char** grid);			// Convert the walls from the difult version to a better loking tiles
-void InsertHostages(char** grid, HostageStation* HostageStations);			// Add people (Hostages and\or kidnappers) to the maze
+void InsertHostages(char** grid,
+	HostageStation* HostageStations);	// Add people (Hostages and\or kidnappers) to the maze
 void InsertRoutePoints(char** grid);	// Add route points to the maze
 void PrintGrid(char** grid);			// Print the array
+
 //----FUNCTIONS-------------------------------------------------------
 void generate(char** grid, HostageStation* HostageStations)
 {
@@ -105,7 +107,7 @@ int IsBrakeble(int x, int y, char** grid) {
 }
 
 void BreakWalls(char** grid) {
-	int numOfWallsBroken = GRID_SIZE*2;
+	int numOfWallsBroken = GRID_SIZE * 2;
 	int location;
 	int brokeWall;
 	int x, y;
@@ -164,14 +166,16 @@ void InsertHostages(char** grid, HostageStation* HostageStations) {
 				if (IsInMaze(newX, newY) && grid[newX][newY] == SPACE) {
 					grid[newX][newY] = PEOPLE;
 					placed = true;
+					x = newX;
+					y = newY;
 				}
 			}
 		}
 
 		// Create a new HostageStation object and store it in the array
 		if (placed) {
-			HostageStations[i] = HostageStation(x, y, i, (double)(rand() % 101)/100,
-				rand() % 10 + 1 , (double)(rand() % 71) / 100, (double)(rand() % 41) / 100);
+			HostageStations[i] = HostageStation(x, y, i, (double)(rand() % 101) / 100,
+				rand() % 10 + 1, (double)(rand() % 71) / 100, (double)(rand() % 41) / 100);
 		}
 		else {
 			HostageStations[i] = HostageStation(-1, -1, i, 0.0, 0, 0.0, 0.0); // if not placed put -1,-1
@@ -317,9 +321,15 @@ void RedoWalls(char** grid) {
 
 void PrintGrid(char** grid) {
 	for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
+		// Print left Y axis
+		printf("%02d ", y % 100); // Print Y coordinate (mod 100)
+
 		for (int x = 0; x < GRID_WIDTH; x++) {
 			putchar(grid[x][y]);
 		}
-		putchar('\n');
+
+		// Print right Y axis
+		printf(" %02d\n", y % 100);
 	}
+	printf("\n");
 }
