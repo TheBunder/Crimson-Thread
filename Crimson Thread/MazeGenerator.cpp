@@ -19,12 +19,12 @@ void Visit(int x, int y, char** grid);	// Move in the array and make a peath (Th
 void BreakWalls(char** grid);			// After the maze was made it breaks aditional paths
 void RedoWalls(char** grid);			// Convert the walls from the difult version to a better loking tiles
 void InsertHostages(char** grid,
-	HostageStation* HostageStations);	// Add people (Hostages and\or kidnappers) to the maze
+	HostageStation** HostageStations);	// Add people (Hostages and\or kidnappers) to the maze
 void InsertRoutePoints(char** grid);	// Add route points to the maze
 void PrintGrid(char** grid);			// Print the array
 
 //----FUNCTIONS-------------------------------------------------------
-void generate(char** grid, HostageStation* HostageStations)
+void generate(char** grid, HostageStation** HostageStations)
 {
 	// Starting point and top-level control.
 	srand(time(0)); // seed random number generator.
@@ -133,7 +133,7 @@ void BreakWalls(char** grid) {
 	}
 }
 
-void InsertHostages(char** grid, HostageStation* HostageStations) {
+void InsertHostages(char** grid, HostageStation** HostageStations) {
 	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
 	bool placed = false;
 	int x, y;
@@ -174,11 +174,11 @@ void InsertHostages(char** grid, HostageStation* HostageStations) {
 
 		// Create a new HostageStation object and store it in the array
 		if (placed) {
-			HostageStations[i] = HostageStation(x, y, i, (double)(rand() % 101) / 100,
+			HostageStations[i] = new HostageStation(x, y, i, (double)(rand() % 101) / 100,
 				rand() % 10 + 1, (double)(rand() % 71) / 100, (double)(rand() % 41) / 100);
 		}
 		else {
-			HostageStations[i] = HostageStation(-1, -1, i, 0.0, 0, 0.0, 0.0); // if not placed put -1,-1
+			HostageStations[i] = new HostageStation(-1, -1, i, 0.0, 0, 0.0, 0.0); // if not placed put -1,-1
 		}
 	}
 }

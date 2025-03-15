@@ -8,21 +8,23 @@
 //----FUNCTION PROTOTYPES---------------------------------------------
 char** allocateGrid();
 void deallocateGrid(char** grid);
-void printHostageStationInfo(HostageStation* HostageStations, int numOfSections);
+void deallocateHostageStations(HostageStation** HostageStations, int numOfSections);
+void printHostageStationInfo(HostageStation** HostageStations, int numOfSections);
 
 //----FUNCTIONS-------------------------------------------------------
 int main()
 {
 	char** grid = allocateGrid();
 	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
-	HostageStation* HostageStations = (HostageStation*)malloc(numOfSections * sizeof(HostageStation));
+	HostageStation** HostageStations = new HostageStation * [numOfSections];
+
 	generate(grid, HostageStations);
 	PrintGrid(grid);
 
 	printHostageStationInfo(HostageStations, numOfSections);
 
 	deallocateGrid(grid);
-	free(HostageStations);
+	deallocateHostageStations(HostageStations, numOfSections);
 }
 
 char** allocateGrid() {
@@ -40,8 +42,15 @@ void deallocateGrid(char** grid) {
 	delete[] grid;
 }
 
-void printHostageStationInfo(HostageStation* HostageStations, int numOfSections) {
+void deallocateHostageStations(HostageStation** HostageStations, int numOfSections) {
 	for (int i = 0; i < numOfSections; i++) {
-		HostageStations[i].printInfo();
+		delete HostageStations[i];
+	}
+	delete[] HostageStations;
+}
+
+void printHostageStationInfo(HostageStation** HostageStations, int numOfSections) {
+	for (int i = 0; i < numOfSections; i++) {
+		HostageStations[i]->printInfo();
 	}
 }

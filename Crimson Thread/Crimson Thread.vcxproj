@@ -127,7 +127,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Crimson Thread.cpp" />
+    <ClCompile Include="Main.cpp" />
     <ClCompile Include="HostageStation.cpp" />
     <ClCompile Include="MazeGenerator.cpp" />
   </ItemGroup>
