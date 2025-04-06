@@ -1,4 +1,9 @@
-﻿enum MazeChar : char {
+﻿const int GRID_SIZE = 51;
+const int GRID_WIDTH = GRID_SIZE;
+const int GRID_HEIGHT = GRID_SIZE;
+const int SUBGRID_SIZE = GRID_SIZE / 4;
+
+enum MazeChar : char {
     TopLeftCorner = 201/*╔*/,
     TopRightCorner = 187/*╗*/,
     BottomLeftCorner = 200/*╚*/,

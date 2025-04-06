@@ -1,6 +1,6 @@
 ﻿//----INCLUDES--------------------------------------------------------
-#include "MazeGenerator.h"
 #include <stdio.h>
+#include "MazeGenerator.h"
 
 //----CONSTANTS-------------------------------------------------------
 const int	DOWN		 = 0;
@@ -319,13 +319,50 @@ void RedoWalls(char** grid) {
 	RedoOuterWalls(grid);
 }
 
+void HostagesColor() {
+	// Color name: MediumPurple1 - 	141
+	printf("\033[38;5;141m"); // A specific color from the 256-color table
+}
+
+void RoutePointsColor() {
+	// Color name: OrangeRed1 - 	202
+	printf("\033[38;5;202m"); // A specific color from the 256-color table
+}
+
+void UnitColor() {
+	// Color name: Green3 - 	40
+	printf("\033[38;5;40m"); // A specific color from the 256-color table
+}
+
+void reset() {
+	printf("\033[0m");
+}
+
 void PrintGrid(char** grid) {
 	for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
 		// Print left Y axis
 		printf("%02d ", y % 100); // Print Y coordinate (mod 100)
 
 		for (int x = 0; x < GRID_WIDTH; x++) {
-			putchar(grid[x][y]);
+			if (grid[x][y] > 100 || grid[x][y] < 0 || grid[x][y] == ' ') {
+				putchar(grid[x][y]);
+			}
+			else {
+				if (grid[x][y] == 'R') {
+					RoutePointsColor();
+				}
+				else {
+					if (grid[x][y] == '@') {
+						HostagesColor();
+					}
+					else {
+						UnitColor();
+					}
+				}
+				putchar(grid[x][y]);
+				reset();
+			}
+
 		}
 
 		// Print right Y axis
