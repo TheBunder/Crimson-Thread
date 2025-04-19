@@ -4,14 +4,11 @@ HostageStation::HostageStation(int x, int y, int subgrid, double hostageChance, 
     double kidnapperChance, double soldierLossChance) :
     subgridAffiliation(subgrid), hostageChance(hostageChance),
     numHostages(numHostages), kidnapperChance(kidnapperChance),
-    soldierLossChance(soldierLossChance) {
-    coords[0] = x; // Assign x to the first element (index 0)
-    coords[1] = y; // Assign y to the second element (index 1)
-}
+    soldierLossChance(soldierLossChance), coords(x, y) {}
 
-int HostageStation::getX() const { return coords[0]; }
-int HostageStation::getY() const { return coords[1]; }
-std::array<int, 2> HostageStation::getCoords() const { return coords; }
+int HostageStation::getX() const { return coords.x; }
+int HostageStation::getY() const { return coords.y; }
+Point HostageStation::getCoords() const { return coords; }
 int HostageStation::getSubgridAffiliation() const { return subgridAffiliation; }
 double HostageStation::getHostageChance() const { return hostageChance; }
 int HostageStation::getNumHostages() const { return numHostages; }
@@ -20,7 +17,7 @@ double HostageStation::getSoldierLossChance() const { return soldierLossChance; 
 
 void HostageStation::printInfo() const {
     printf("Hostage Station Info:\n");
-    printf("  X: %d, Y: %d\n", coords[0], coords[1]);
+    printf("  X: %d, Y: %d\n", coords.x, coords.y);
     printf("  Subgrid: %d\n", subgridAffiliation);
     printf("  Hostage Chance: %.2f\n", hostageChance);
     printf("  Number of Hostages: %d\n", numHostages);

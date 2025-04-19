@@ -39,27 +39,24 @@ void AddToOpen(int x, int y, int g, int h, vector<vector<int>>& open_nodes, char
     grid[x][y] = State::kClosed;
 }
 
-// Define a key type for our parent map
-typedef std::pair<int, int> Point;
-
-void ExpandNeighbors(const vector<int>& current_node, std::array<int, 2> goal,
+void ExpandNeighbors(const vector<int>& current_node, Point goal,
     vector<vector<int>>& open_nodes, char** grid, std::map<Point, Point>& parent_map)
 {
     int x = current_node[0];
     int y = current_node[1];
     int g = current_node[2];
-    Point current_point(x, y);
+    Point current_point = {x, y};
 
-    vector<vector<int>> possibleMovements{ {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
+    vector<Point> possibleMovements{ {1, 0}, {0, 1}, {-1, 0}, {0, -1} };
 
-    for (vector<int> movement : possibleMovements)
+    for (Point movement : possibleMovements)
     {
-        int x_test = x + movement[0];
-        int y_test = y + movement[1];
+        int x_test = x + movement.x;
+        int y_test = y + movement.y;
         if (CheckValidCell(x_test, y_test, grid))
         {
             int g_test = g + 1;
-            int h = Heuristic(x_test, y_test, goal[0], goal[1]);
+            int h = Heuristic(x_test, y_test, goal.x, goal.y);
             // Store parent relationship before adding to open list
             parent_map[Point(x_test, y_test)] = current_point;
             AddToOpen(x_test, y_test, g_test, h, open_nodes, grid);
@@ -67,22 +64,22 @@ void ExpandNeighbors(const vector<int>& current_node, std::array<int, 2> goal,
     }
 }
 
-vector<std::array<int, 2>> ReconstructPath(std::map<Point, Point>& parent_map,
-    std::array<int, 2> start,
-    std::array<int, 2> goal)
+vector<Point> ReconstructPath(std::map<Point, Point>& parent_map,
+    Point start,
+    Point goal)
 {
-    vector<std::array<int, 2>> path;
-    Point current(goal[0], goal[1]);
-    Point start_point(start[0], start[1]);
+    vector<Point> path;
+    Point current = {goal.x, goal.y};
+    Point start_point = {start.x, start.y};
 
     // Add goal to path
-    path.push_back({ current.first, current.second });
+    path.push_back({ current.x, current.y });
 
     // Work backwards from goal to start
     while (current != start_point && parent_map.find(current) != parent_map.end())
     {
         current = parent_map[current];
-        path.push_back({ current.first, current.second });
+        path.push_back({ current.x, current.y });
     }
 
     // Reverse to get path from start to goal
@@ -91,15 +88,15 @@ vector<std::array<int, 2>> ReconstructPath(std::map<Point, Point>& parent_map,
     return path;
 }
 
-vector<std::array<int, 2>> Search(char** grid, std::array<int, 2> start, std::array<int, 2> goal)
+vector<Point> Search(char** grid, Point start, Point goal)
 {
     vector<vector<int>> open_nodes{};
     std::map<Point, Point> parent_map;
 
-    int x = start[0];
-    int y = start[1];
+    int x = start.x;
+    int y = start.y;
     int g = 0;
-    int h = Heuristic(x, y, goal[0], goal[1]);
+    int h = Heuristic(x, y, goal.x, goal.y);
     AddToOpen(x, y, g, h, open_nodes, grid);
 
     while (!open_nodes.empty())
@@ -112,7 +109,7 @@ vector<std::array<int, 2>> Search(char** grid, std::array<int, 2> start, std::ar
         y = current_node[1];
         grid[x][y] = State::kSearched;
 
-        if (x == goal[0] && y == goal[1])
+        if (x == goal.x && y == goal.y)
         {
             // Path found, reconstruct it
             return ReconstructPath(parent_map, start, goal);
@@ -123,10 +120,10 @@ vector<std::array<int, 2>> Search(char** grid, std::array<int, 2> start, std::ar
     // We've run out of new nodes to explore and haven't found a path.
     printf("No path found!\n");
 
-    return vector<std::array<int, 2>>(); // Return empty vector if no path found
+    return vector<Point>(); // Return empty vector if no path found
 }
 
-vector<std::array<int, 2>> AStar(char** grid, char** path, std::array<int, 2> start, std::array<int, 2> goal)
+vector<Point> AStar(char** grid, char** path, Point start, Point goal)
 {
     // convert grid to path
     for (int y = GRID_HEIGHT - 1; y >= 0; y--) {

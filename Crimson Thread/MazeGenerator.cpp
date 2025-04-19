@@ -371,9 +371,9 @@ void PrintGrid(char** grid) {
 	PrintXAxis();
 }
 
-void PrintGridWithPath(char** grid, char** gridPath, vector<std::array<int, 2>> path) {
-	for (std::array<int, 2> coord : path) {
-		gridPath[coord[0]][coord[1]] = kPath;
+void PrintGridWithPath(char** grid, char** gridPath, vector<Point> path) {
+	for (Point coord : path) {
+		gridPath[coord.x][coord.y] = kPath;
 	}
 	char fBGChanged = 0;
 	for (int y = GRID_HEIGHT - 1; y >= 0; y--) {

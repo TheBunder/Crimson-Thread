@@ -25,9 +25,9 @@ int main()
 
 	generate(grid, HostageStations);
 	//PrintGrid(grid);
-	std::array<int, 2> start = {15,5};
+	Point start = {15,5};
 
-	vector<std::array<int, 2>> path = AStar(grid, gridPath, HostageStations[0]->getCoords(), HostageStations[2]->getCoords());
+	vector<Point> path = AStar(grid, gridPath, HostageStations[0]->getCoords(), HostageStations[2]->getCoords());
 	
 	PrintGridWithPath(grid, gridPath, path);
 

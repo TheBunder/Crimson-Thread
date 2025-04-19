@@ -2,11 +2,12 @@
 #define HOSTAGESTATION_H
 
 #include<array>
-#include <stdio.h> // Included for printing
+#include <stdio.h>
+#include "MazeBasics.h"
 
 class HostageStation {
 private:
-    std::array<int, 2> coords; // To hold x and y coordinates
+    Point coords; // To hold x and y coordinates
     int subgridAffiliation;
     double hostageChance;
     int numHostages;
@@ -21,7 +22,7 @@ public:
     // Getters
     int getX() const;
     int getY() const;
-    std::array<int, 2> getCoords() const;
+    Point getCoords() const;
     int getSubgridAffiliation() const;
     double getHostageChance() const;
     int getNumHostages() const;
