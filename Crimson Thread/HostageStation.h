@@ -1,12 +1,12 @@
 #ifndef HOSTAGESTATION_H
 #define HOSTAGESTATION_H
 
+#include<array>
 #include <stdio.h> // Included for printing
 
 class HostageStation {
 private:
-    int x;
-    int y;
+    std::array<int, 2> coords; // To hold x and y coordinates
     int subgridAffiliation;
     double hostageChance;
     int numHostages;
@@ -21,6 +21,7 @@ public:
     // Getters
     int getX() const;
     int getY() const;
+    std::array<int, 2> getCoords() const;
     int getSubgridAffiliation() const;
     double getHostageChance() const;
     int getNumHostages() const;

@@ -1,5 +1,5 @@
 #include "Unit.h"
-#include "MazeChars.h"
+#include "MazeBasics.h"
 #include <cstdlib> // For rand()
 #include <ctime>   // For time()
 
@@ -30,7 +30,7 @@ void Unit::move(char** grid) {
 
 
 	// 70% chance to continue in the same direction
-	if (rand() % 10 < 7 && isLegal(newX, newY, grid)) {
+	if (rand() % 100 < 80 && isLegal(newX, newY, grid)) {
 		// Continue in the current direction
 	}
 	else {

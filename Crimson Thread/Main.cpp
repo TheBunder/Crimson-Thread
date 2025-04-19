@@ -7,6 +7,7 @@
 #include "MazeGenerator.h"
 #include "HostageStation.h"
 #include "Unit.h"
+#include "AStar.h"
 
 //----FUNCTION PROTOTYPES---------------------------------------------
 char** allocateGrid();
@@ -18,43 +19,22 @@ void printHostageStationInfo(HostageStation** HostageStations, int numOfSections
 int main()
 {
 	char** grid = allocateGrid();
+	char** path = allocateGrid();
 	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
 	HostageStation** HostageStations = new HostageStation * [numOfSections];
 
 	generate(grid, HostageStations);
-	PrintGrid(grid);
+	//PrintGrid(grid);
+	std::array<int, 2> start = {5,5};
+
+	AStar(grid, path, start, HostageStations[2]->getCoords());
 	
-	// Initialize random seed
-	srand(time(0));
-
-	// Create the Unit at a starting position
-	Unit* Unit2 = new Unit(1, 1, grid[1][1]);
-	Unit* Unit4 = new Unit(20, 20, grid[20][20]);
-	Unit* Unit8 = new Unit(30, 40, grid[30][40]);
-	Sleep(5000);
-	// Simulate a few moves
-	for (int i = 0; i < 1000; ++i) {
-		Unit2->move(grid);
-		Unit4->move(grid);
-		Unit8->move(grid);
-		Sleep(1000);
-		//Print from top left - removes stater
-		COORD coord = { 0, 0 };
-		SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-
-		//printf("Unit's current position: (%d, %d)\n", playerUnit->getX(), playerUnit->getY());
-		PrintGrid(grid);
-		fflush(stdout);
-	}
-
+	PrintGridWithPath(grid, path);
 
 	//printHostageStationInfo(HostageStations, numOfSections);
 
 	deallocateGrid(grid);
 	deallocateHostageStations(HostageStations, numOfSections);
-	delete Unit2;
-	delete Unit4;
-	delete Unit8;
 }
 
 char** allocateGrid() {

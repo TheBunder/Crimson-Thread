@@ -7,10 +7,6 @@ const int	DOWN		 = 0;
 const int	RIGHT		 = 1;
 const int	UP			 = 2;
 const int	LEFT		 = 3;
-const char	WALL		 = 219;			// █
-const char	SPACE		 = 32;			// | |<- Space
-const char	PEOPLE		 = 64;			// @
-const char	RoutePoint	 = 82;			// R
 
 //----FUNCTION PROTOTYPES---------------------------------------------
 void ResetGrid(char** grid);			//Fill the array with the WALL sign
@@ -43,14 +39,6 @@ void ResetGrid(char** grid) {
 			grid[y][x] = WALL;
 		}
 	}
-}
-
-int IsInArrayBounds(int x, int y)
-{
-	// Returns "true" if x and y are both in-bounds.
-	if (x < 0 || x >= GRID_WIDTH) return false;
-	if (y < 0 || y >= GRID_HEIGHT) return false;
-	return true;
 }
 
 int IsInMaze(int x, int y)
@@ -154,7 +142,7 @@ void InsertHostages(char** grid, HostageStation** HostageStations) {
 		y = subgrid_y * SUBGRID_SIZE + rand() % SUBGRID_SIZE;
 
 		if (grid[x][y] == SPACE) {
-			grid[x][y] = PEOPLE;
+			grid[x][y] = HOSTAGES;
 			placed = true;
 		}
 		else {
@@ -164,8 +152,8 @@ void InsertHostages(char** grid, HostageStation** HostageStations) {
 				newY = y + dy[j];
 
 				if (IsInMaze(newX, newY) && grid[newX][newY] == SPACE) {
-					grid[newX][newY] = PEOPLE;
-					placed = true;
+					grid[newX][newY] = HOSTAGES;
+					placed = true; // It still might not be placed
 					x = newX;
 					y = newY;
 				}
@@ -215,59 +203,41 @@ void InsertRoutePoints(char** grid) {
 
 				if (IsInMaze(newX, newY) && grid[newX][newY] == SPACE) {
 					grid[newX][newY] = RoutePoint; // Use the RoutePoint character
-					placed = true;
+					placed = true; // It still might not be placed
 				}
 			}
 		}
 	}
 }
 
-int GetWallPositionValue(int x, int y, char** grid) {
+int GetWallSurroundingValue(int x, int y, char** grid) {
 	return (grid[x + 1][y] != SPACE) * 1 + (grid[x][y + 1] != SPACE) * 2
 		+ (grid[x - 1][y] != SPACE) * 4 + (grid[x][y - 1] != SPACE) * 8;
 }
 
 void RedoInnerWalls(char** grid) {
+	char walls[] = {
+		HorizontalWall,     // 0
+		HorizontalWall,     // 1
+		VerticalWall,       // 2
+		BottomLeftCorner,   // 3
+		HorizontalWall,     // 4
+		HorizontalWall,     // 5
+		BottomRightCorner,  // 6
+		TopTee,             // 7
+		VerticalWall,       // 8
+		TopLeftCorner,      // 9
+		VerticalWall,       // 10
+		RightTee,           // 11
+		TopRightCorner,     // 12
+		BottomTee,          // 13
+		LeftTee,            // 14
+		Cross               // 15
+	};
 	for (int y = 1; y < GRID_HEIGHT - 1; y++) {
 		for (int x = 1; x < GRID_WIDTH - 1; x++) {
 			if (grid[x][y] == WALL) {
-				switch (GetWallPositionValue(x, y, grid)) {
-				case 0: case 1: case 4: case 5:
-					grid[x][y] = MazeChar::HorizontalWall;
-					break;
-				case 2: case 8: case 10:
-					grid[x][y] = MazeChar::VerticalWall;
-					break;
-				case 3:
-					grid[x][y] = MazeChar::BottomLeftCorner;
-					break;
-				case 6:
-					grid[x][y] = MazeChar::BottomRightCorner;
-					break;
-				case 7:
-					grid[x][y] = MazeChar::TopTee;
-					break;
-				case 9:
-					grid[x][y] = MazeChar::TopLeftCorner;
-					break;
-				case 11:
-					grid[x][y] = MazeChar::RightTee;
-					break;
-				case 12:
-					grid[x][y] = MazeChar::TopRightCorner;
-					break;
-				case 13:
-					grid[x][y] = MazeChar::BottomTee;
-					break;
-				case 14:
-					grid[x][y] = MazeChar::LeftTee;
-					break;
-				case 15:
-					grid[x][y] = MazeChar::Cross;
-					break;
-				default:
-					break;
-				}
+				grid[x][y] = walls[GetWallSurroundingValue(x, y, grid)];
 			}
 		}
 	}
@@ -319,40 +289,69 @@ void RedoWalls(char** grid) {
 	RedoOuterWalls(grid);
 }
 
+// All colors that are used are from the 256-color color table
 void HostagesColor() {
-	// Color name: MediumPurple1 - 	141
-	printf("\033[38;5;141m"); // A specific color from the 256-color table
+	// Color name: MediumPurple1 - 141
+	printf("\033[38;5;141m");
 }
 
 void RoutePointsColor() {
-	// Color name: OrangeRed1 - 	202
-	printf("\033[38;5;202m"); // A specific color from the 256-color table
+	// Color name: OrangeRed1 - 202
+	printf("\033[38;5;202m");
 }
 
 void UnitColor() {
-	// Color name: Green3 - 	40
-	printf("\033[38;5;40m"); // A specific color from the 256-color table
+	// Color name: Green3 - 40
+	printf("\033[38;5;40m");
 }
 
-void reset() {
+void resetFG() {
+	// Reset FG back to black
 	printf("\033[0m");
 }
 
+void SearchedColor() {
+	// Color name: PaleTurquoise1 - 159
+	printf("\033[48;5;159m");
+}
+
+void PathColor() {
+	// Color name: GreenYellow - 154
+	printf("\033[48;5;154m");
+}
+
+void resetBG() {
+	// Reset BG back to black
+	printf("\033[48;5;0m");
+}
+
+void PrintXAxis() {
+	printf("   ");
+	for (int i = 0; i < GRID_WIDTH; i++)
+	{
+		putchar(i % 10 + '0');
+	}
+	putchar('\n');
+}
+
 void PrintGrid(char** grid) {
+	// Print top X axis
+	PrintXAxis();
+
 	for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
 		// Print left Y axis
 		printf("%02d ", y % 100); // Print Y coordinate (mod 100)
 
 		for (int x = 0; x < GRID_WIDTH; x++) {
-			if (grid[x][y] > 100 || grid[x][y] < 0 || grid[x][y] == ' ') {
+			if ((unsigned char)grid[x][y] > 100 || grid[x][y] == ' ') {
 				putchar(grid[x][y]);
 			}
 			else {
-				if (grid[x][y] == 'R') {
+				if (grid[x][y] == RoutePoint) {
 					RoutePointsColor();
 				}
 				else {
-					if (grid[x][y] == '@') {
+					if (grid[x][y] == HOSTAGES) {
 						HostagesColor();
 					}
 					else {
@@ -360,9 +359,60 @@ void PrintGrid(char** grid) {
 					}
 				}
 				putchar(grid[x][y]);
-				reset();
+				resetFG();
 			}
 
+		}
+
+		// Print right Y axis
+		printf(" %02d\n", y % 100);
+	}
+
+	// Print bottom X axis
+	PrintXAxis();
+}
+
+void PrintGridWithPath(char** grid, char** path) {
+	char fBGChanged = 0;
+	for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
+		// Print left Y axis
+		printf("%02d ", y % 100); // Print Y coordinate (mod 100)
+
+		for (int x = 0; x < GRID_WIDTH; x++) {
+			if (path[x][y] == kClosed) {
+				SearchedColor();
+				fBGChanged = 1;
+			}
+			else
+			{
+				if (path[x][y] == kPath)
+				{
+					PathColor();
+					fBGChanged = 1;
+				}
+			}
+			if ((unsigned char)grid[x][y] > 100 || grid[x][y] == ' ') {
+				putchar(grid[x][y]);
+			}
+			else {
+				if (grid[x][y] == RoutePoint) {
+					RoutePointsColor();
+				}
+				else {
+					if (grid[x][y] == HOSTAGES) {
+						HostagesColor();
+					}
+					else {
+						UnitColor();
+					}
+				}
+				putchar(grid[x][y]);
+				resetFG();
+			}
+			if (fBGChanged) {
+				resetBG();
+				fBGChanged>>1; // make zero
+			}
 		}
 
 		// Print right Y axis
