@@ -1,5 +1,4 @@
 ﻿//----INCLUDES--------------------------------------------------------
-#include <stdio.h>
 #include "MazeGenerator.h"
 
 //----CONSTANTS-------------------------------------------------------
@@ -372,25 +371,26 @@ void PrintGrid(char** grid) {
 	PrintXAxis();
 }
 
-void PrintGridWithPath(char** grid, char** path) {
+void PrintGridWithPath(char** grid, char** gridPath, vector<std::array<int, 2>> path) {
+	for (std::array<int, 2> coord : path) {
+		gridPath[coord[0]][coord[1]] = kPath;
+	}
 	char fBGChanged = 0;
 	for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
 		// Print left Y axis
 		printf("%02d ", y % 100); // Print Y coordinate (mod 100)
 
 		for (int x = 0; x < GRID_WIDTH; x++) {
-			if (path[x][y] == kClosed) {
+			if (gridPath[x][y] == kClosed || gridPath[x][y] == kSearched) {
 				SearchedColor();
 				fBGChanged = 1;
 			}
-			else
+			else if (gridPath[x][y] == kPath)
 			{
-				if (path[x][y] == kPath)
-				{
 					PathColor();
 					fBGChanged = 1;
-				}
 			}
+
 			if ((unsigned char)grid[x][y] > 100 || grid[x][y] == ' ') {
 				putchar(grid[x][y]);
 			}

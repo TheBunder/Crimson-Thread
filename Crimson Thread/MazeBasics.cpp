@@ -1,5 +1,7 @@
+//----INCLUDES--------------------------------------------------------
 #include "MazeBasics.h"
 
+//----FUNCTIONS-------------------------------------------------------
 int IsInArrayBounds(int x, int y)
 {
 	// Returns "true" if x and y are both in-bounds.

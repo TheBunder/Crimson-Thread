@@ -1,5 +1,13 @@
 ﻿#ifndef MAZE_BASICS
 #define MAZE_BASICS
+//----INCLUDES-------------------------------------------------------
+#include <array>
+#include <vector>
+#include <stdio.h>
+
+using std::vector;
+//----CONSTANTS------------------------------------------------------
+
 const int GRID_SIZE = 101;
 const int GRID_WIDTH = GRID_SIZE;
 const int GRID_HEIGHT = GRID_SIZE;
@@ -9,6 +17,7 @@ const char	SPACE = 32;			// | |<- Space
 const char	HOSTAGES = 64;		// @
 const char	RoutePoint = 82;    // R
 
+//----ENUM-----------------------------------------------------------
 enum MazeChar : char {
     TopLeftCorner = 201/*╔*/,
     TopRightCorner = 187/*╗*/,
@@ -28,11 +37,13 @@ enum State : char
     kEmpty,
     kObstacle,
     kClosed,
-    kPath,
+    kSearched,
     kStart,
-    kFinish
+    kFinish,
+    kPath
 };
 
+//----FUNCTION DECLARATIONS------------------------------------------
 int IsInArrayBounds(int x, int y);
 
 #endif MAZE_BASICS

@@ -19,17 +19,17 @@ void printHostageStationInfo(HostageStation** HostageStations, int numOfSections
 int main()
 {
 	char** grid = allocateGrid();
-	char** path = allocateGrid();
+	char** gridPath = allocateGrid();
 	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
 	HostageStation** HostageStations = new HostageStation * [numOfSections];
 
 	generate(grid, HostageStations);
 	//PrintGrid(grid);
-	std::array<int, 2> start = {5,5};
+	std::array<int, 2> start = {15,5};
 
-	AStar(grid, path, start, HostageStations[2]->getCoords());
+	vector<std::array<int, 2>> path = AStar(grid, gridPath, HostageStations[0]->getCoords(), HostageStations[2]->getCoords());
 	
-	PrintGridWithPath(grid, path);
+	PrintGridWithPath(grid, gridPath, path);
 
 	//printHostageStationInfo(HostageStations, numOfSections);
 
