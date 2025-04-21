@@ -6,6 +6,7 @@
 #include <stdio.h>
 //----NAMESPACES------------------------------------------------------
 using std::vector;
+using namespace std;
 
 //----CONSTANTS------------------------------------------------------
 
@@ -16,10 +17,9 @@ const int SUBGRID_SIZE = GRID_SIZE / 4;
 const char	WALL = 219;			// █
 const char	SPACE = 32;			// | |<- Space
 const char	HOSTAGES = 64;		// @
-const char	RoutePoint = 82;    // R
 
 //----ENUM-----------------------------------------------------------
-enum MazeChar : char {
+enum MazeChar : unsigned char {
     TopLeftCorner = 201/*╔*/,
     TopRightCorner = 187/*╗*/,
     BottomLeftCorner = 200/*╚*/,
@@ -76,6 +76,8 @@ typedef struct Point {
 } Point;
 
 //----FUNCTION DECLARATIONS------------------------------------------
+char** allocateGrid();
+void deallocateGrid(char** grid);
 int IsInArrayBounds(int x, int y);
 
-#endif MAZE_BASICS
+#endif

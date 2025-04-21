@@ -6,4 +6,4 @@
 //----FUNCTION DECLARATIONS-------------------------------------
 void generate(char** grid, HostageStation** HostageStations); // Generate the maze and insert the people and the GPS stations
 void PrintGrid(char** grid); // Print the maze
-void PrintGridWithPath(char** grid, char** gridPath, vector<Point> path); // Print the array with the A* search
+void PrintGridWithPath(char** grid, char** navGrid, vector<Point> path); // Print the array with the A* search

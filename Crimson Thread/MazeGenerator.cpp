@@ -8,7 +8,7 @@ const int	UP			 = 2;
 const int	LEFT		 = 3;
 
 // Lookup table for wall characters based on surrounding value
-const char WallTypeByPattern[16] = {
+constexpr unsigned char WallTypeByPattern[16] = {
 	MazeChar::HorizontalWall,    // 0: No walls around
 	MazeChar::HorizontalWall,    // 1: Wall to the right
 	MazeChar::VerticalWall,      // 2: Wall below
@@ -30,12 +30,11 @@ const char WallTypeByPattern[16] = {
 //----FUNCTION PROTOTYPES---------------------------------------------
 void ResetGrid(char** grid);			//Fill the array with the WALL sign
 int	 IsInArrayBounds(int x, int y);		// Check if the x and y points are in the array
-void Visit(int x, int y, char** grid);	// Move in the array and make a peath (The main method to creat the maze)
-void BreakWalls(char** grid);			// After the maze was made it breaks aditional paths
-void RedoWalls(char** grid);			// Convert the walls from the difult version to a better loking tiles
+void Visit(int x, int y, char** grid);	// Move in the array and make a path (The main method to creat the maze)
+void BreakWalls(char** grid);			// After the maze was made it breaks additional paths
+void RedoWalls(char** grid);			// Convert the walls from the difficult version to a better looking tiles
 void InsertHostages(char** grid,
 	HostageStation** HostageStations);	// Add people (Hostages and\or kidnappers) to the maze
-void InsertRoutePoints(char** grid);	// Add route points to the maze
 void PrintGrid(char** grid);			// Print the array
 
 //----FUNCTIONS-------------------------------------------------------
@@ -48,7 +47,6 @@ void generate(char** grid, HostageStation** HostageStations)
 	BreakWalls(grid);
 	RedoWalls(grid);
 	InsertHostages(grid, HostageStations);
-	InsertRoutePoints(grid);
 }
 
 void ResetGrid(char** grid) {
@@ -76,7 +74,7 @@ void Visit(int x, int y, char** grid) {
 	int dirs[4] = { DOWN, RIGHT, UP, LEFT };
 	for (int i = 0; i < 4; ++i) {
 		int r = rand() % 4;
-		dirs[r] = dirs[r] ^ dirs[i]; // Switch betwin two random elements
+		dirs[r] = dirs[r] ^ dirs[i]; // Switch between two random elements
 		dirs[i] = dirs[r] ^ dirs[i];
 		dirs[r] = dirs[r] ^ dirs[i];
 	}
@@ -85,10 +83,10 @@ void Visit(int x, int y, char** grid) {
 	for (int i = 0; i < 4; ++i) {
 		int dx = 0, dy = 0;
 		switch (dirs[i]) {
-		case DOWN: dy = -1; break;
-		case UP: dy = 1; break;
-		case RIGHT: dx = 1; break;
-		case LEFT: dx = -1; break;
+			case DOWN: dy = -1; break;
+			case UP: dy = 1; break;
+			case RIGHT: dx = 1; break;
+			case LEFT: dx = -1; break;
 		}
 
 		int x2 = x + (dx * 2);
@@ -103,7 +101,7 @@ void Visit(int x, int y, char** grid) {
 	}
 }
 
-int IsBrakeble(int x, int y, char** grid) {
+int IsBreakable(int x, int y, char** grid) {
 	if (!IsInMaze(x, y)) {
 		return false;
 	}
@@ -124,10 +122,10 @@ void BreakWalls(char** grid) {
 		location = rand(); // Random location
 
 		while (!brokeWall) {
-			location %= (GRID_WIDTH * GRID_HEIGHT); // Keaps in the grid at all the iterations
+			location %= (GRID_WIDTH * GRID_HEIGHT); // Keeps in the grid at all the iterations
 			x = location % GRID_WIDTH;
 			y = location / GRID_WIDTH;
-			if (grid[x][y] == WALL && IsBrakeble(x, y, grid))
+			if (grid[x][y] == WALL && IsBreakable(x, y, grid))
 			{
 				brokeWall = 1;
 			}
@@ -186,45 +184,6 @@ void InsertHostages(char** grid, HostageStation** HostageStations) {
 		}
 		else {
 			HostageStations[i] = new HostageStation(-1, -1, i, 0.0, 0, 0.0, 0.0); // if not placed put -1,-1
-		}
-	}
-}
-
-void InsertRoutePoints(char** grid) {
-	int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
-	bool placed = false;
-	int x, y;
-	int newX, newY;
-
-	int dx[] = { -1, -1, -1, 0, 0, 1, 1, 1 };
-	int dy[] = { -1, 0, 1, -1, 1, -1, 0, 1 };
-
-	for (int i = 0; i < numOfSections; i++) {
-		placed = false;
-
-		// Calculate subgrid coordinates
-		int subgrid_x = i % (GRID_WIDTH / SUBGRID_SIZE);
-		int subgrid_y = i / (GRID_WIDTH / SUBGRID_SIZE);
-
-		// Calculate the middle of the subgrid
-		x = subgrid_x * SUBGRID_SIZE + SUBGRID_SIZE / 2;
-		y = subgrid_y * SUBGRID_SIZE + SUBGRID_SIZE / 2;
-
-		if (IsInMaze(x, y) && grid[x][y] == SPACE) {
-			grid[x][y] = RoutePoint; // Use the RoutePoint character
-			placed = true;
-		}
-		else {
-			// Try surrounding positions
-			for (int j = 0; j < 8 && !placed; j++) {
-				newX = x + dx[j];
-				newY = y + dy[j];
-
-				if (IsInMaze(newX, newY) && grid[newX][newY] == SPACE) {
-					grid[newX][newY] = RoutePoint; // Use the RoutePoint character
-					placed = true; // It still might not be placed
-				}
-			}
 		}
 	}
 }
@@ -294,11 +253,6 @@ void RedoWalls(char** grid) {
 
 // All colors that are used are from the 256-color color table
 void HostagesColor() {
-	// Color name: MediumPurple1 - 141
-	printf("\033[38;5;141m");
-}
-
-void RoutePointsColor() {
 	// Color name: OrangeRed1 - 202
 	printf("\033[38;5;202m");
 }
@@ -350,16 +304,11 @@ void PrintGrid(char** grid) {
 				putchar(grid[x][y]);
 			}
 			else {
-				if (grid[x][y] == RoutePoint) {
-					RoutePointsColor();
+				if (grid[x][y] == HOSTAGES) {
+					HostagesColor();
 				}
 				else {
-					if (grid[x][y] == HOSTAGES) {
-						HostagesColor();
-					}
-					else {
-						UnitColor();
-					}
+					UnitColor();
 				}
 				putchar(grid[x][y]);
 				resetFG();
@@ -375,9 +324,9 @@ void PrintGrid(char** grid) {
 	PrintXAxis();
 }
 
-void PrintGridWithPath(char** grid, char** gridPath, vector<Point> path) {
+void PrintGridWithPath(char** grid, char** navGrid, vector<Point> path) {
 	for (Point coord : path) {
-		gridPath[coord.x][coord.y] = kPath;
+		navGrid[coord.x][coord.y] = kPath;
 	}
 	char fBGChanged = 0;
 	for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
@@ -385,42 +334,37 @@ void PrintGridWithPath(char** grid, char** gridPath, vector<Point> path) {
 		printf("%02d ", y % 100); // Print Y coordinate (mod 100)
 
 		for (int x = 0; x < GRID_WIDTH; x++) {
-			if (gridPath[x][y] == kClosed || gridPath[x][y] == kSearched) {
-				SearchedColor();
+			if (navGrid[x][y] == kPath) {
+				PathColor();
 				fBGChanged = 1;
-			}
-			else if (gridPath[x][y] == kPath)
-			{
-					PathColor();
-					fBGChanged = 1;
 			}
 
 			if ((unsigned char)grid[x][y] > 100 || grid[x][y] == ' ') {
 				putchar(grid[x][y]);
 			}
 			else {
-				if (grid[x][y] == RoutePoint) {
-					RoutePointsColor();
+				if (grid[x][y] == HOSTAGES) {
+					HostagesColor();
 				}
 				else {
-					if (grid[x][y] == HOSTAGES) {
-						HostagesColor();
-					}
-					else {
-						UnitColor();
-					}
+					UnitColor();
 				}
 				putchar(grid[x][y]);
 				resetFG();
 			}
 			if (fBGChanged) {
 				resetBG();
-				fBGChanged>>1; // make zero
+				fBGChanged >>=1; // make zero
 			}
 		}
 
 		// Print right Y axis
 		printf(" %02d\n", y % 100);
 	}
+
+	for (Point coord : path) {
+		navGrid[coord.x][coord.y] = kEmpty;
+	}
+
 	printf("\n");
 }

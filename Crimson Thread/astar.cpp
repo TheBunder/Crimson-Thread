@@ -123,20 +123,25 @@ vector<Point> Search(char** grid, Point start, Point goal)
     return vector<Point>(); // Return empty vector if no path found
 }
 
-vector<Point> AStar(char** grid, char** path, Point start, Point goal)
+vector<Point> AStar(char** grid, Point start, Point goal)
 {
-    // convert grid to path
+    char **navGrid = allocateGrid();
+
+    // convert grid to navGrid
     for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
         for (int x = 0; x < GRID_WIDTH; x++) {
             if ((unsigned char)grid[x][y] > 100) {
-                path[x][y] = kObstacle;
+                navGrid[x][y] = kObstacle;
             }
             else {
-                path[x][y] = kEmpty;
+                navGrid[x][y] = kEmpty;
             }
         }
     }
+    vector<Point> path = Search(navGrid, start, goal);
+
+    deallocateGrid(navGrid);
 
     // Return the path as a vector of points
-    return Search(path, start, goal);
+    return path;
 }

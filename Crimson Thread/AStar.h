@@ -15,5 +15,4 @@ using std::string;
 using std::vector;
 
 //----FUNCTION DECLARATIONS-------------------------------------
-vector<Point> Search(char** grid, Point start, Point goal);
-vector<Point> AStar(char** grid, char** path, Point start, Point goal);
+vector<Point> AStar(char** grid,  Point start, Point goal);
