@@ -7,6 +7,26 @@ const int	RIGHT		 = 1;
 const int	UP			 = 2;
 const int	LEFT		 = 3;
 
+// Lookup table for wall characters based on surrounding value
+const char WallTypeByPattern[16] = {
+	MazeChar::HorizontalWall,    // 0: No walls around
+	MazeChar::HorizontalWall,    // 1: Wall to the right
+	MazeChar::VerticalWall,      // 2: Wall below
+	MazeChar::BottomLeftCorner,  // 3: Wall to right and below
+	MazeChar::HorizontalWall,    // 4: Wall to the left
+	MazeChar::HorizontalWall,    // 5: Walls to right and left
+	MazeChar::BottomRightCorner, // 6: Walls to left and below
+	MazeChar::TopTee,            // 7: Walls to right, left, and below
+	MazeChar::VerticalWall,      // 8: Wall above
+	MazeChar::TopLeftCorner,     // 9: Walls to right and above
+	MazeChar::VerticalWall,      // 10: Walls above and below
+	MazeChar::RightTee,          // 11: Walls to right, below, and above
+	MazeChar::TopRightCorner,    // 12: Walls to left and above
+	MazeChar::BottomTee,         // 13: Walls to right, left, and above
+	MazeChar::LeftTee,           // 14: Walls to left, below, and above
+	MazeChar::Cross              // 15: Walls in all directions
+};
+
 //----FUNCTION PROTOTYPES---------------------------------------------
 void ResetGrid(char** grid);			//Fill the array with the WALL sign
 int	 IsInArrayBounds(int x, int y);		// Check if the x and y points are in the array
@@ -210,33 +230,17 @@ void InsertRoutePoints(char** grid) {
 }
 
 int GetWallSurroundingValue(int x, int y, char** grid) {
-	return (grid[x + 1][y] != SPACE) * 1 + (grid[x][y + 1] != SPACE) * 2
-		+ (grid[x - 1][y] != SPACE) * 4 + (grid[x][y - 1] != SPACE) * 8;
+	return	(grid[x + 1][y] != SPACE) * 1 +  // Right neighbor
+			(grid[x][y + 1] != SPACE) * 2 +  // Top neighbor
+			(grid[x - 1][y] != SPACE) * 4 +  // Left neighbor
+			(grid[x][y - 1] != SPACE) * 8;   // Bottom neighbor
 }
 
 void RedoInnerWalls(char** grid) {
-	char walls[] = {
-		HorizontalWall,     // 0
-		HorizontalWall,     // 1
-		VerticalWall,       // 2
-		BottomLeftCorner,   // 3
-		HorizontalWall,     // 4
-		HorizontalWall,     // 5
-		BottomRightCorner,  // 6
-		TopTee,             // 7
-		VerticalWall,       // 8
-		TopLeftCorner,      // 9
-		VerticalWall,       // 10
-		RightTee,           // 11
-		TopRightCorner,     // 12
-		BottomTee,          // 13
-		LeftTee,            // 14
-		Cross               // 15
-	};
 	for (int y = 1; y < GRID_HEIGHT - 1; y++) {
 		for (int x = 1; x < GRID_WIDTH - 1; x++) {
 			if (grid[x][y] == WALL) {
-				grid[x][y] = walls[GetWallSurroundingValue(x, y, grid)];
+				grid[x][y] = WallTypeByPattern[GetWallSurroundingValue(x, y, grid)];
 			}
 		}
 	}

@@ -4,6 +4,7 @@
 #include <Math.h>
 #include <iostream>
 #include <windows.h>
+#include <chrono>
 #include "MazeGenerator.h"
 #include "HostageStation.h"
 #include "Unit.h"
@@ -24,16 +25,26 @@ int main()
 	HostageStation** HostageStations = new HostageStation * [numOfSections];
 
 	generate(grid, HostageStations);
-	//PrintGrid(grid);
-	Point start = {15,5};
 
-	vector<Point> path = AStar(grid, gridPath, HostageStations[0]->getCoords(), HostageStations[2]->getCoords());
-	
-	PrintGridWithPath(grid, gridPath, path);
+	auto start_iteration = std::chrono::high_resolution_clock::now();
+	for (int i = 0; i < numOfSections; i++)
+	{
+		for (int j = i+1; j < numOfSections; j++)
+		{
+			AStar(grid, gridPath, HostageStations[i]->getCoords(), HostageStations[j]->getCoords());
+		}
+	}
+	auto end_iteration = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> elapsed_iteration = end_iteration - start_iteration;
+
+	std::cout << "Total execution time: " << elapsed_iteration.count() << " seconds" << std::endl;
+
+	//PrintGridWithPath(grid, gridPath, path);
 
 	//printHostageStationInfo(HostageStations, numOfSections);
 
 	deallocateGrid(grid);
+	deallocateGrid(gridPath);
 	deallocateHostageStations(HostageStations, numOfSections);
 }
 
