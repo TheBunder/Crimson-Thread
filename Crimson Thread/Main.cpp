@@ -40,6 +40,7 @@ int main()
 	// Create a thread pool with hardware_concurrency threads (usually better than creating too many threads)
 	ThreadPool pool(std::thread::hardware_concurrency());
 
+	// Find the best path between each one of the important points
 	for (int i = 0; i < numOfSections; i++)
 	{
 		for (int j = i+1; j < numOfSections; j++)
@@ -57,7 +58,12 @@ int main()
 		}
 	}
 
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	// ENd Path finding time and print it
+	auto end_iteration = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> elapsed_iteration = end_iteration - start_iteration;
+	printf("Path finding execution time: %fl seconds\n",elapsed_iteration.count());
+
+	// Print each one of the paths for debug
 	for (int i = 0; i < numOfSections; i++)
 	{
 		for (int j = i+1; j < numOfSections; j++)
@@ -66,17 +72,17 @@ int main()
 		}
 	}
 
+	// Print the info about each of the HS for debug
 	//printHostageStationInfo(HostageStations, numOfSections);
 
+	// Deallocate space
 	deallocateGrid(grid);
 	deallocateGrid(navGrid);
 	deallocateHostageStations(HostageStations, numOfSections);
 
 	// Print running time
-	auto end_iteration = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double> elapsed_iteration = end_iteration - start_iteration;
-
-	printf("Total execution time: %d seconds",elapsed_iteration.count());
+	elapsed_iteration = end_iteration - start_iteration;
+	printf("\nTotal execution time: %fl seconds",elapsed_iteration.count());
 }
 
 //  Enables ANSI escape code processing on Windows console.
