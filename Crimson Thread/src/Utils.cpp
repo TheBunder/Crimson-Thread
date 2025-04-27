@@ -1,5 +1,5 @@
 //----INCLUDES--------------------------------------------------------
-#include "MazeBasics.h"
+#include "include/Utils.h"
 
 //----FUNCTIONS-------------------------------------------------------
 char **allocateGrid() {

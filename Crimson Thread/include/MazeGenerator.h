@@ -1,9 +1,9 @@
 ﻿//----INCLUDES--------------------------------------------------------
 #include <iostream>
-#include "MazeBasics.h"
+#include "Utils.h"
 #include "HostageStation.h"
 
 //----FUNCTION DECLARATIONS-------------------------------------
-void generate(char** grid, HostageStation** HostageStations); // Generate the maze and insert the people and the GPS stations
+Point generate(char** grid, HostageStation** HostageStations); // Generate the maze and insert the people and the GPS stations
 void PrintGrid(char** grid); // Print the maze
 void PrintGridWithPath(char** grid, char** navGrid, vector<Point> path); // Print the array with the A* search

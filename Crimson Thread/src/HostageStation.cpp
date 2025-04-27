@@ -1,7 +1,7 @@
-#include "HostageStation.h"
+#include "../include/HostageStation.h"
 
 HostageStation::HostageStation(int x, int y, int subgrid, double hostageChance, int numHostages,
-    double kidnapperChance, double soldierLossChance) :
+                               double kidnapperChance, double soldierLossChance) :
     subgridAffiliation(subgrid), hostageChance(hostageChance),
     numHostages(numHostages), kidnapperChance(kidnapperChance),
     soldierLossChance(soldierLossChance), coords(x, y) {}

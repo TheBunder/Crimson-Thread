@@ -3,7 +3,7 @@
 
 #include<array>
 #include <stdio.h>
-#include "MazeBasics.h"
+#include "Utils.h"
 
 class HostageStation {
 private:

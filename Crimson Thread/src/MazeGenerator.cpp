@@ -1,5 +1,5 @@
 ﻿//----INCLUDES--------------------------------------------------------
-#include "MazeGenerator.h"
+#include "include/MazeGenerator.h"
 
 //----CONSTANTS-------------------------------------------------------
 const int	DOWN		 = 0;
@@ -31,14 +31,15 @@ constexpr unsigned char WallTypeByPattern[16] = {
 void ResetGrid(char** grid);			//Fill the array with the WALL sign
 int	 IsInArrayBounds(int x, int y);		// Check if the x and y points are in the array
 void Visit(int x, int y, char** grid);	// Move in the array and make a path (The main method to creat the maze)
-void BreakWalls(char** grid);			// After the maze was made it breaks additional paths
-void RedoWalls(char** grid);			// Convert the walls from the difficult version to a better looking tiles
+void BreakWalls(char** grid);			// After the maze was made, it breaks additional paths
+void RedoWalls(char** grid);			// Convert the walls from the default version to a better looking tiles
 void InsertHostages(char** grid,
 	HostageStation** HostageStations);	// Add people (Hostages and\or kidnappers) to the maze
 void PrintGrid(char** grid);			// Print the array
+Point InsertUnitEntrance(char ** grid);	// Find a good position for the units to start.
 
 //----FUNCTIONS-------------------------------------------------------
-void generate(char** grid, HostageStation** HostageStations)
+Point generate(char** grid, HostageStation** HostageStations)
 {
 	// Starting point and top-level control.
 	srand(time(0)); // seed random number generator.
@@ -47,6 +48,7 @@ void generate(char** grid, HostageStation** HostageStations)
 	BreakWalls(grid);
 	RedoWalls(grid);
 	InsertHostages(grid, HostageStations);
+	return InsertUnitEntrance(grid);
 }
 
 void ResetGrid(char** grid) {
@@ -184,6 +186,20 @@ void InsertHostages(char** grid, HostageStation** HostageStations) {
 		}
 		else {
 			HostageStations[i] = new HostageStation(-1, -1, i, 0.0, 0, 0.0, 0.0); // if not placed put -1,-1
+		}
+	}
+}
+
+Point InsertUnitEntrance(char ** grid) {
+	int xPos = GRID_WIDTH/2;
+	for (int x = 0; x < GRID_WIDTH/2 - 2; x++) {
+		if (grid[xPos+x][1] == SPACE) {
+			grid[xPos+x][1] = 'E';
+			return {xPos+x,1};
+		}
+		if (grid[xPos-x][1] == SPACE) {
+			grid[xPos-x][1] = 'E';
+			return {xPos-x,1};
 		}
 	}
 }

@@ -1,7 +1,7 @@
 //----INCLUDES--------------------------------------------------------
 #include <map>
 #include <utility>  // for std::pair
-#include "AStar.h"
+#include "include/AStar.h"
 
 //----FUNCTIONS-------------------------------------------------------
 /*

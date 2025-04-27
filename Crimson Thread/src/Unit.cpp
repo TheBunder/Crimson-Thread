@@ -1,5 +1,5 @@
-#include "Unit.h"
-#include "MazeBasics.h"
+#include "../include/Unit.h"
+#include "../include/Utils.h"
 #include <cstdlib> // For rand()
 #include <ctime>   // For time()
 

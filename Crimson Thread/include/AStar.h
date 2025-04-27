@@ -4,7 +4,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
-#include "MazeBasics.h"
+#include "Utils.h"
 
 //----NAMESPACES------------------------------------------------------
 using std::abs;

@@ -3,13 +3,19 @@
 //----INCLUDES-------------------------------------------------------
 #include <array>
 #include <vector>
-#include <stdio.h>
+#include <map>
 //----NAMESPACES------------------------------------------------------
-using std::vector;
 using namespace std;
+using std::vector;
+using std::map;
+using std::pair;
+
+// Key: Pair of IDs (Station/Start Point). Ensure consistent ordering (e.g., smaller ID first).
+// Special ID for start points (units IDs are index*-1 ; station ID are index+1)
+using LocationID = int; // Use negative numbers for start points, positive for stations
+using PathKey = pair<LocationID, LocationID>;
 
 //----CONSTANTS------------------------------------------------------
-
 const int GRID_SIZE = 101;
 const int GRID_WIDTH = GRID_SIZE;
 const int GRID_HEIGHT = GRID_SIZE;

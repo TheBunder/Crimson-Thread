@@ -1,4 +1,4 @@
-#include "ThreadPool.h"
+#include "include/ThreadPool.h"
 
 ThreadPool::ThreadPool(size_t num_threads)
 {
@@ -55,7 +55,35 @@ void ThreadPool::enqueue(std::function<void()> task)
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex_);
-        tasks_.emplace(std::move(task));
+        // Increment active tasks count
+        active_tasks_++;
+
+        // Wrap the task to track completion
+        auto wrapped_task = [this, task = std::move(task)]() {
+            // Execute the original task
+            task();
+
+            // Decrement active tasks and notify if all tasks are done
+            int remaining;
+            {
+                std::unique_lock<std::mutex> lock(queue_mutex_);
+                remaining = --active_tasks_;
+            }
+
+            // If this was the last task, notify anyone waiting
+            if (remaining == 0) {
+                tasks_done_cv_.notify_all();
+            }
+        };
+
+        tasks_.emplace(std::move(wrapped_task));
     }
     cv_.notify_one();
+}
+
+void ThreadPool::wait_all() {
+    std::unique_lock<std::mutex> lock(queue_mutex_);
+    tasks_done_cv_.wait(lock, [this]() {
+        return active_tasks_ == 0 && tasks_.empty();
+    });
 }
