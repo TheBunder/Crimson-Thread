@@ -42,7 +42,6 @@ Point InsertUnitEntrance(char ** grid);	// Find a good position for the units to
 Point generate(char** grid, HostageStation** HostageStations)
 {
 	// Starting point and top-level control.
-	srand(time(0)); // seed random number generator.
 	ResetGrid(grid);
 	Visit(1, 1, grid);
 	BreakWalls(grid);

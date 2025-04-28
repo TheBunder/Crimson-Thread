@@ -23,6 +23,43 @@ int getPathCost(LocationID id1, LocationID id2, const map<PathKey, vector<Point>
     return static_cast<int>(it->second.size()) - 1;
 }
 
+double sumPValue(vector<vector<LocationID>> plan, HostageStation **HostageStations) {
+    double sum = 0;
+    for (int i = 0; i < plan.size(); i++) {
+        for (int j = 1; j < plan[i].size(); j++) { // Skip the units starting position
+            sum += HostageStations[plan[i][j] - 1]->getPValue(); // removed one to turn back to index
+        }
+    }
+
+    return sum;
+}
+
+Chromosome *getFittestChromosome(Chromosome **chromosomeArray, HostageStation **HostageStations, int population) {
+    Chromosome *fittest = chromosomeArray[0];
+    double fittestPValue = sumPValue(fittest->unitPaths, HostageStations);
+    double chromosomePValue;
+    for (int i = 0; i < population; ++i) {
+        chromosomePValue = sumPValue(chromosomeArray[i]->unitPaths, HostageStations);
+        if (chromosomePValue >fittestPValue) {
+            fittest = chromosomeArray[i];
+            fittestPValue = chromosomePValue;
+        }
+    }
+
+    return fittest;
+}
+
+Chromosome *getFittestChromosome(Chromosome **chromosomeArray, int population) {
+    Chromosome *fittest = chromosomeArray[0];
+    for (int i = 0; i < population; ++i) {
+        if (chromosomeArray[i]->fitness > fittest->fitness) {
+            fittest = chromosomeArray[i];
+        }
+    }
+
+    return fittest;
+}
+
 Chromosome **allocateChromosome(int numOfUnits) {
     Chromosome **chromosomeArray = new Chromosome *[POPULATION_SIZE];
     for (int i = 0; i < POPULATION_SIZE; i++) {
@@ -90,14 +127,12 @@ void printChromosomeInfo(const Chromosome& chromosome, int chromosomeIndex) {
     }
 }
 
-void initialization(const map<PathKey, vector<Point> > &pathsBetweenStations, int numOfHostageStations,
+void initialization(Chromosome **chromosomeArray, const map<PathKey, vector<Point> > &pathsBetweenStations, int numOfHostageStations,
                     int numOfUnits) {
-    // Allocate population
-    Chromosome **chromosomeArray = allocateChromosome(numOfUnits);
     // Initialize available stations (0 to 16)
     vector<int> availableStations;
 
-    for (int c = 0; c < 200; c++) {
+    for (int c = 0; c < POPULATION_SIZE; c++) {
         // Reset valid stations
         resetAvailable(&availableStations, numOfHostageStations);
 
@@ -114,11 +149,26 @@ void initialization(const map<PathKey, vector<Point> > &pathsBetweenStations, in
             int randomStation = availableStations[randomIndex];
             if (isReachable(chromosomeArray[c], u, randomStation, pathsBetweenStations)) {
                 insertStationToPath(chromosomeArray[c], u, randomStation, pathsBetweenStations);
+
                 // Remove the station using swap and pop
                 swap(availableStations[randomIndex], availableStations.back());
                 availableStations.pop_back();
             }
         }
-        // printChromosomeInfo(*(chromosomeArray[c]),c);
     }
+}
+
+vector<vector<LocationID>> mainAlgorithm(const map<PathKey, vector<Point> > &pathsBetweenStations, int numOfHostageStations,
+                    int numOfUnits, HostageStation **HostageStations) {
+    // Allocate population
+    Chromosome **chromosomeArray = allocateChromosome(numOfUnits);
+
+    initialization(chromosomeArray, pathsBetweenStations, numOfHostageStations, numOfUnits);
+
+    vector<vector<LocationID>> bestPath = getFittestChromosome(chromosomeArray, HostageStations, POPULATION_SIZE)->unitPaths;
+
+    // Deallocate population
+    deallocateChromosome(chromosomeArray);
+
+    return bestPath;
 }

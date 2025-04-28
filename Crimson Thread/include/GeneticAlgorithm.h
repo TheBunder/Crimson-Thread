@@ -2,6 +2,7 @@
 #define GENETIC_ALGORITHM_H
 //----INCLUDES--------------------------------------------------------
 #include "Utils.h"
+#include "HostageStation.h"
 
 //----CONSTANTS------------------------------------------------------
 const int UNIT_STEP_BUDGET = 180;
@@ -19,5 +20,7 @@ struct Chromosome {
 //----FUNCTION DECLARATIONS------------------------------------------
 PathKey makeKey(LocationID id1, LocationID id2); // Function to ensure consistent key ordering
 int getPathCost(LocationID id1, LocationID id2, const map<PathKey, vector<Point> > &pathsBetweenStations); // Helper to get cost (length - 1), returns -1 or throws if path not found
-void initialization(const map<PathKey, vector<Point> > &pathsBetweenStations, int numOfHostageStations, int numOfUnits); //initialize chromosome population
+double sumPValue(vector<vector<LocationID>> plan, HostageStation **HostageStations); // Get the total PValue from the plan
+vector<vector<LocationID>> mainAlgorithm(const map<PathKey, vector<Point> > &pathsBetweenStations, int numOfHostageStations,
+                    int numOfUnits, HostageStation **HostageStations); //initialize chromosome population
 #endif //GENETIC_ALGORITHM_H

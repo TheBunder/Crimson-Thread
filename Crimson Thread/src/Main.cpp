@@ -22,7 +22,8 @@ void fillImportantPoints(Point *importantPoints, HostageStation **HostageStation
 int main() {
     // prep
     auto start_iteration = std::chrono::high_resolution_clock::now();
-    enable_ansi_escape_codes(); // Used to enable colors
+    enable_ansi_escape_codes(); // Used to enable
+	srand(time(0)); // seed random number generator.
 
     // variables
     char **grid = allocateGrid();
@@ -69,8 +70,13 @@ int main() {
     std::chrono::duration<double> elapsed_iteration = end_iteration - start_iteration;
     printf("Path finding execution time: %fl seconds\n", elapsed_iteration.count());
 
-    // this_thread::sleep_for(chrono::seconds(1));
+    // Main algorithm
+    vector<vector<LocationID>> answer = mainAlgorithm(pathsBetweenStations, numOfSections, numOfUnits, HostageStations);
 
+    // Print total Pvalue
+    printf("Total PValue for the mision: %.2f\n", sumPValue(answer, HostageStations));
+
+    /*
     // for (LocationID i = 0; i < numOfSections + 1; i++) {
     //     for (LocationID j = i + 1; j < numOfSections + 1; j++) {
     //         printf("Distance from %d to %d is: %d\n",i,j, pathsBetweenStations[{i,j}].size()-1);
@@ -78,9 +84,9 @@ int main() {
     // }
 
     // Genetic Algorithm
-    initialization(pathsBetweenStations, numOfSections, numOfUnits);
 
-    /*
+
+
     // Print each one of the paths for debug
     for (LocationID i = 0; i < numOfSections; i++)
     {
@@ -89,10 +95,11 @@ int main() {
             PrintGridWithPath(grid, navGrid, pathsBetweenStations[{i,j}]);
         }
     }
-    */
+
 
     // Print the info about each of the HS for debug
     //printHostageStationInfo(HostageStations, numOfSections);
+    */
 
     // Deallocate space
     deallocateGrid(grid);

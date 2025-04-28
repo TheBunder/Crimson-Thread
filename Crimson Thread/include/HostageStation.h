@@ -28,6 +28,7 @@ public:
     int getNumHostages() const;
     double getKidnapperChance() const;
     double getSoldierLossChance() const;
+    double getPValue() const;
 
     // Print Info Method
     void printInfo() const;
