@@ -7,6 +7,11 @@
 //----CONSTANTS------------------------------------------------------
 const int UNIT_STEP_BUDGET = 180;
 const int POPULATION_SIZE = 200;
+const int GENERATIONS = 400;
+const int TOURNAMENT_SIZE = 5;
+const int CROSSOVER_RATE = 80; // In precents
+const int MUTATION_RATE = 02;  // In precents
+const int NUM_OF_ELITS = 1;  // Number of elit chromosomes
 
 //----STRUCT------------------------------------------------------
 struct Chromosome {
@@ -15,6 +20,7 @@ struct Chromosome {
     vector<int> unitSteps; // Holds how much steps each unit takes in here current plan
     double fitness = 0.0; // Stores the calculated fitness (total PValue)
     bool isValid = false; // Flag indicating if constraints are met
+    bool needsFitnessEvaluation  = true; // Flag indicating if we need to pass through fitness check
 };
 
 //----FUNCTION DECLARATIONS------------------------------------------
