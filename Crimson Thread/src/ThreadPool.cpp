@@ -1,9 +1,9 @@
 #include "include/ThreadPool.h"
 
-ThreadPool::ThreadPool(size_t num_threads)
+ThreadPool::ThreadPool(unsigned int num_threads)
 {
     // Creating worker threads
-    for (size_t i = 0; i < num_threads; ++i) {
+    for (int i = 0; i < num_threads; ++i) {
         threads_.emplace_back([this] {
             while (true) {
                 std::function<void()> task;

@@ -7,7 +7,7 @@
 
 class HostageStation {
 private:
-    Point coords; // To hold x and y coordinates
+    Point coords; // Hold x and y coordinates
     int subgridAffiliation;
     double hostageChance;
     int numHostages;

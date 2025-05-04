@@ -13,7 +13,7 @@
 class ThreadPool {
 public:
     // Constructor to create a thread pool with given number of threads
-    ThreadPool(size_t num_threads = std::thread::hardware_concurrency());
+    ThreadPool(unsigned int num_threads = std::thread::hardware_concurrency());
 
     // Destructor to stop the thread pool
     ~ThreadPool();

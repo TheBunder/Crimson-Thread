@@ -24,3 +24,7 @@ int IsInArrayBounds(int x, int y)
 	if (y < 0 || y >= GRID_HEIGHT) return false;
 	return true;
 }
+
+PathKey makeKey(LocationID id1, LocationID id2) {
+	return std::make_pair(std::min(id1, id2), std::max(id1, id2));
+}

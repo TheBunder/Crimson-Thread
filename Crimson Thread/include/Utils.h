@@ -12,17 +12,19 @@ using std::pair;
 
 // Key: Pair of IDs (Station/Start Point). Ensure consistent ordering (e.g., smaller ID first).
 // Special ID for start points (units IDs are index*-1 ; station ID are index+1)
-using LocationID = int; // Use negative numbers for start points, positive for stations
+using LocationID = int;
 using PathKey = pair<LocationID, LocationID>;
 
 //----CONSTANTS------------------------------------------------------
 const int GRID_SIZE = 101;
 const int GRID_WIDTH = GRID_SIZE;
 const int GRID_HEIGHT = GRID_SIZE;
-const int SUBGRID_SIZE = GRID_SIZE / 4;
+const int NUM_SUBGRIDS_PER_DIMENSION = 4;
+const int SUBGRID_SIZE = GRID_SIZE / NUM_SUBGRIDS_PER_DIMENSION;
 const char	WALL = 219;			// █
-const char	SPACE = 32;			// | |<- Space
+const char	PATH = 32;			// | |<- Space
 const char	HOSTAGES = 64;		// @
+const char	UNIT = 85;		    // U
 
 //----ENUM-----------------------------------------------------------
 enum MazeChar : unsigned char {
@@ -60,7 +62,7 @@ typedef struct Point {
     Point(int x_val, int y_val) : x(x_val), y(y_val) {}
 
     // Default constructor (no arguments)
-    Point() : x(0), y(0) {} // Initialize x and y to some default values (e.g., 0)
+    Point() : x(0), y(0) {} // Initialize x and y to some default values
 
     // Overloaded equality operator (==)
     bool operator==(const Point& other) const {
@@ -85,5 +87,6 @@ typedef struct Point {
 char** allocateGrid();
 void deallocateGrid(char** grid);
 int IsInArrayBounds(int x, int y);
+PathKey makeKey(LocationID id1, LocationID id2); // Function to ensure consistent key ordering
 
 #endif

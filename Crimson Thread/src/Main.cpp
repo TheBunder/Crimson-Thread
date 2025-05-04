@@ -8,7 +8,7 @@
 #include <map>
 #include "include/MazeGenerator.h"
 #include "include/HostageStation.h"
-#include "include/AStar.h"
+#include "include/BFS.h"
 #include "include/ThreadPool.h"
 #include "include/GeneticAlgorithm.h"
 
@@ -35,11 +35,11 @@ int main() {
     map<PathKey, vector<Point> > pathsBetweenStations;
 
     // Generate maze and hostages (in the future, maybe units)
-    Point unitsStartingPosition = generate(grid, HostageStations); // <---------------------------------------
+    Point unitsEntrance = generate(grid, HostageStations); // <---------------------------------------
 
     // Array that holds the points to all hostage station and the unit starting point.
     Point *importantPoints = new Point[numOfSections + 1];
-    fillImportantPoints(importantPoints, HostageStations, numOfSections, unitsStartingPosition);
+    fillImportantPoints(importantPoints, HostageStations, numOfSections, unitsEntrance);
 
     // Add a mutex to protect the map from concurrent access
     std::mutex pathMapMutex;
@@ -51,13 +51,9 @@ int main() {
     for (LocationID i = 0; i < numOfSections + 1; i++) {
         for (LocationID j = i + 1; j < numOfSections + 1; j++) {
             // Capture i and j by value to avoid issues with the loop variables changing
-            pool.enqueue([i, j, &grid, &importantPoints, &pathsBetweenStations, &pathMapMutex]() {
+            pool.enqueue([i, &grid, &importantPoints, &pathsBetweenStations, &pathMapMutex, numOfSections]() {
                 // Calculate the path
-                vector<Point> path = AStar(grid, importantPoints[i], importantPoints[j]);
-
-                // Safely store the result in the map using a mutex
-                std::lock_guard<std::mutex> lock(pathMapMutex);
-                pathsBetweenStations[{i, j}] = path;
+                BFS(grid, i, importantPoints[i], importantPoints, numOfSections+1, pathsBetweenStations, pathMapMutex);
             });
         }
     }
@@ -74,7 +70,7 @@ int main() {
     vector<vector<LocationID>> answer = mainAlgorithm(pathsBetweenStations, numOfSections, numOfUnits, HostageStations);
 
     // Print total Pvalue
-    printf("Total PValue for the mision: %.2f\n", sumPValue(answer, HostageStations));
+    printf("Total PValue for the mission: %.2f\n", sumPValue(answer, HostageStations));
 
     /*
     // for (LocationID i = 0; i < numOfSections + 1; i++) {
@@ -83,23 +79,21 @@ int main() {
     //     }
     // }
 
-    // Genetic Algorithm
-
-
-
     // Print each one of the paths for debug
-    for (LocationID i = 0; i < numOfSections; i++)
-    {
-        for (LocationID j = i+1; j < numOfSections; j++)
-        {
-            PrintGridWithPath(grid, navGrid, pathsBetweenStations[{i,j}]);
-        }
-    }
+    // for (LocationID i = 0; i < numOfSections; i++)
+    // {
+    //     for (LocationID j = i+1; j < numOfSections; j++)
+    //     {
+    //         PrintGridWithPath(grid, navGrid, pathsBetweenStations[{i,j}]);
+    //     }
+    // }
 
 
     // Print the info about each of the HS for debug
     //printHostageStationInfo(HostageStations, numOfSections);
     */
+
+    ShowOperation(grid, numOfUnits, unitsEntrance, answer, pathsBetweenStations);
 
     // Deallocate space
     deallocateGrid(grid);

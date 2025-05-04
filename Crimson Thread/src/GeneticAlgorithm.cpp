@@ -1,15 +1,11 @@
 //----INCLUDES--------------------------------------------------------
 #include <stdlib.h>
 #include <cstdio>
-#include <unordered_set>
+#include <set>
 # include "include/GeneticAlgorithm.h"
 
 
 //----FUNCTIONS-------------------------------------------------------
-PathKey makeKey(LocationID id1, LocationID id2) {
-    return std::make_pair(std::min(id1, id2), std::max(id1, id2));
-}
-
 int getPathCost(LocationID id1, LocationID id2, const map<PathKey, vector<Point> > &pathsBetweenStations) {
     PathKey key = makeKey(id1, id2);
     auto it = pathsBetweenStations.find(key);
@@ -52,7 +48,7 @@ bool isValid(Chromosome *chromosome, const map<PathKey, vector<Point> > &pathsBe
     }
 
     // A set to store encountered LocationIDs
-    std::unordered_set<LocationID> encountered_stations;
+    std::set<LocationID> encountered_stations;
     int pathLength = 0;
 
     int i = 0;
@@ -163,13 +159,39 @@ bool isReachable(Chromosome *chromosome, int unit, LocationID station,
     return (chromosome->unitSteps[unit] + pathCost) <= UNIT_STEP_BUDGET && pathCost != -1;
 }
 
-// Function to print Chromosome information using printf
+// Function to print unit paths
+void PrintUnitPaths(const vector<vector<LocationID>> &unitPaths) {
+    printf("Unit Paths:\n");
+    for (size_t unitIndex = 0; unitIndex < unitPaths.size(); ++unitIndex) {
+        printf("Unit %zu: ", unitIndex);
+        if (unitPaths[unitIndex].empty()) {
+            printf("[]\n"); // Empty path
+        } else {
+            for (int locationId: unitPaths[unitIndex]) {
+                printf("%d ", locationId);
+            }
+            printf("\n");
+        }
+    }
+}
+
+// Function to print unit steps
+void PrintUnitSteps(const vector<int> &unitSteps) {
+    // Print unit steps
+    printf("  Unit Steps:\n");
+    for (size_t unitIndex = 0; unitIndex < unitSteps.size(); ++unitIndex) {
+        printf("    Unit %zu: %d\n", unitIndex, unitSteps[unitIndex]);
+    }
+}
+
+// Function to print Chromosome information
 void printChromosomeInfo(const Chromosome &chromosome, int chromosomeIndex) {
     printf("Chromosome %d:\n", chromosomeIndex); // Add an index for readability
     printf("Valid: %s\n", chromosome.isValid ? "true" : "false");
     printf("Fitness: %.2f\n", chromosome.fitness);
 
     // Print unit paths
+    PrintUnitPaths(chromosome.unitPaths);
     printf("Unit Paths:\n");
     for (size_t unitIndex = 0; unitIndex < chromosome.unitPaths.size(); ++unitIndex) {
         printf("Unit %zu: ", unitIndex);
@@ -184,10 +206,7 @@ void printChromosomeInfo(const Chromosome &chromosome, int chromosomeIndex) {
     }
 
     // Print unit steps
-    printf("  Unit Steps:\n");
-    for (size_t unitIndex = 0; unitIndex < chromosome.unitSteps.size(); ++unitIndex) {
-        printf("    Unit %zu: %d\n", unitIndex, chromosome.unitSteps[unitIndex]);
-    }
+    PrintUnitSteps(chromosome.unitSteps);
 }
 
 void Initialization(Chromosome **chromosomeArray, const map<PathKey, vector<Point> > &pathsBetweenStations,
@@ -223,7 +242,7 @@ void Initialization(Chromosome **chromosomeArray, const map<PathKey, vector<Poin
 }
 
 void CalculateFitness(Chromosome *chromosome, const map<PathKey, vector<Point> > &pathsBetweenStations,
-                      int numOfUnits, int numOfHostageStations, HostageStation **HostageStations) {
+                    HostageStation **HostageStations) {
     bool valid = isValid(chromosome, pathsBetweenStations);
     chromosome->isValid = valid;
     if (!valid) {
@@ -235,11 +254,10 @@ void CalculateFitness(Chromosome *chromosome, const map<PathKey, vector<Point> >
 }
 
 void CalculatePopulationFitness(Chromosome **chromosomeArray, const map<PathKey, vector<Point> > &pathsBetweenStations,
-                                int numOfUnits, int numOfHostageStations, HostageStation **HostageStations) {
+                                HostageStation **HostageStations) {
     for (int i = 0; i < POPULATION_SIZE; ++i) {
         if (chromosomeArray[i]->needsFitnessEvaluation) {
-            CalculateFitness(chromosomeArray[i], pathsBetweenStations, numOfUnits, numOfHostageStations,
-                             HostageStations);
+            CalculateFitness(chromosomeArray[i], pathsBetweenStations, HostageStations);
         }
     }
 }
@@ -313,7 +331,7 @@ LocationID findRandomUnusedStation(const Chromosome *chromosome, const int numOf
     }
 
     // 1. Collect all used LocationIDs in the chromosome
-    std::unordered_set<LocationID> used_stations;
+    std::set<LocationID> used_stations;
     for (const vector<LocationID> path: chromosome->unitPaths) {
         // Assuming path starts at index 0, include all stations in the path
         for (const LocationID station_id: path) {
@@ -444,37 +462,45 @@ void Mutation(Chromosome **nextGeneration, int numOfUnits, int numOfHostageStati
 vector<vector<LocationID> > mainAlgorithm(const map<PathKey, vector<Point> > &pathsBetweenStations,
                                           int numOfUnits,
                                           int numOfHostageStations, HostageStation **HostageStations) {
-    // Allocate population
+    // Allocate memory for population
     Chromosome **currentPopulation = allocateChromosomePopulation(numOfUnits);
     Chromosome **matingPool = (Chromosome **) malloc(sizeof(Chromosome *) * POPULATION_SIZE);
-    Chromosome **nextGeneration = (Chromosome **) malloc(sizeof(Chromosome *) * POPULATION_SIZE);
+    Chromosome **offspringPopulation = (Chromosome **) malloc(sizeof(Chromosome *) * POPULATION_SIZE);
 
+    // Create and evaluate Generation 0
     Initialization(currentPopulation, pathsBetweenStations, numOfHostageStations, numOfUnits);
-    CalculatePopulationFitness(currentPopulation, pathsBetweenStations, numOfUnits, numOfHostageStations,
-                               HostageStations);
+    CalculatePopulationFitness(currentPopulation, pathsBetweenStations, HostageStations);
 
     for (int G = 0; G < GENERATIONS; ++G) {
+        // 1. Selection: Choose parents from currentPopulation based on fitness, fill matingPool
         Selection(currentPopulation, matingPool);
-        Crossover(matingPool, nextGeneration, numOfUnits);
-        Mutation(nextGeneration, numOfUnits, numOfHostageStations, pathsBetweenStations);
-        CalculatePopulationFitness(currentPopulation, pathsBetweenStations, numOfUnits, numOfHostageStations,
-                                   HostageStations);
+
+        // 2. Crossover: Create new offspring from matingPool.
+        // Offspring chromosomes are newly allocated. Pointers stored in offspringPopulation.
+        Crossover(matingPool, offspringPopulation, numOfUnits);
+
+        // 3. Mutation: Apply mutations to some of the newly created offspring (in offspringPopulation)
+        Mutation(offspringPopulation, numOfUnits, numOfHostageStations, pathsBetweenStations);
+
+        // 4. Evaluate Fitness of New Offspring
+        // Only evaluates offspring marked as needing evaluation by Crossover/Mutation.
+        CalculatePopulationFitness(currentPopulation, pathsBetweenStations, HostageStations);
         currentPopulation[0] = getFittestChromosome(currentPopulation);
         Chromosome *ListFittest = getFittestChromosome(currentPopulation);
 
         for (int i = 1; i < POPULATION_SIZE; ++i) {
-            if(nextGeneration[i-1] != ListFittest) {
-                currentPopulation[i] = nextGeneration[i-1];
+            if(offspringPopulation[i-1] != ListFittest) {
+                currentPopulation[i] = offspringPopulation[i-1];
             }
         }
 
     }
 
-    vector<vector<LocationID> > bestPath = getFittestChromosome(currentPopulation)->unitPaths;
+    vector<vector<LocationID> > bestPlan = getFittestChromosome(currentPopulation)->unitPaths;
 
     // Deallocate population
     deallocateChromosomePopulation(currentPopulation);
     free(matingPool);
-    free(nextGeneration);
-    return bestPath;
+    free(offspringPopulation);
+    return bestPlan;
 }
