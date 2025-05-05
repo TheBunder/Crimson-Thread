@@ -27,7 +27,6 @@ int main() {
 
     // variables
     char **grid = allocateGrid();
-    char **navGrid = allocateGrid();
     int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
     int numOfUnits = (rand() % 3) + 3;
 
@@ -49,13 +48,11 @@ int main() {
 
     // Find the best path between each one of the important points
     for (LocationID i = 0; i < numOfSections + 1; i++) {
-        for (LocationID j = i + 1; j < numOfSections + 1; j++) {
-            // Capture i and j by value to avoid issues with the loop variables changing
-            pool.enqueue([i, &grid, &importantPoints, &pathsBetweenStations, &pathMapMutex, numOfSections]() {
-                // Calculate the path
-                BFS(grid, i, importantPoints[i], importantPoints, numOfSections+1, pathsBetweenStations, pathMapMutex);
-            });
-        }
+        // Capture i by value to avoid issues with the loop variables changing
+        pool.enqueue([i, &grid, &importantPoints, &pathsBetweenStations, &pathMapMutex, numOfSections]() {
+            // Calculate the path
+            BFS(grid, i, importantPoints[i], importantPoints, numOfSections+1, pathsBetweenStations, pathMapMutex);
+        });
     }
 
     // Wait for all tasks to complete before proceeding
@@ -68,38 +65,15 @@ int main() {
 
     // Main algorithm
     vector<vector<LocationID>> answer = mainAlgorithm(pathsBetweenStations, numOfSections, numOfUnits, HostageStations);
-
     // Print total Pvalue
     printf("Total PValue for the mission: %.2f\n", sumPValue(answer, HostageStations));
-
-    /*
-    // for (LocationID i = 0; i < numOfSections + 1; i++) {
-    //     for (LocationID j = i + 1; j < numOfSections + 1; j++) {
-    //         printf("Distance from %d to %d is: %d\n",i,j, pathsBetweenStations[{i,j}].size()-1);
-    //     }
-    // }
-
-    // Print each one of the paths for debug
-    // for (LocationID i = 0; i < numOfSections; i++)
-    // {
-    //     for (LocationID j = i+1; j < numOfSections; j++)
-    //     {
-    //         PrintGridWithPath(grid, navGrid, pathsBetweenStations[{i,j}]);
-    //     }
-    // }
-
-
-    // Print the info about each of the HS for debug
-    //printHostageStationInfo(HostageStations, numOfSections);
-    */
 
     ShowOperation(grid, numOfUnits, unitsEntrance, answer, pathsBetweenStations);
 
     // Deallocate space
     deallocateGrid(grid);
-    deallocateGrid(navGrid);
     deallocateHostageStations(HostageStations, numOfSections);
-
+    delete[] importantPoints;
     // Print running time
     end_iteration = std::chrono::high_resolution_clock::now();
     elapsed_iteration = end_iteration - start_iteration;

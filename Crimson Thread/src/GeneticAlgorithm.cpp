@@ -192,18 +192,6 @@ void printChromosomeInfo(const Chromosome &chromosome, int chromosomeIndex) {
 
     // Print unit paths
     PrintUnitPaths(chromosome.unitPaths);
-    printf("Unit Paths:\n");
-    for (size_t unitIndex = 0; unitIndex < chromosome.unitPaths.size(); ++unitIndex) {
-        printf("Unit %zu: ", unitIndex);
-        if (chromosome.unitPaths[unitIndex].empty()) {
-            printf("[]\n"); // Empty path
-        } else {
-            for (int locationId: chromosome.unitPaths[unitIndex]) {
-                printf("%d ", locationId);
-            }
-            printf("\n");
-        }
-    }
 
     // Print unit steps
     PrintUnitSteps(chromosome.unitSteps);
@@ -270,6 +258,7 @@ void Selection(Chromosome **chromosomeArray, Chromosome **matingPool) {
         }
         matingPool[i] = getFittestChromosome(arena, TOURNAMENT_SIZE);
     }
+    deallocateChromosomePopulation(arena);
 }
 
 void Crossover(Chromosome **matingPool, Chromosome **nextGeneration, int numOfUnits) {
@@ -280,11 +269,10 @@ void Crossover(Chromosome **matingPool, Chromosome **nextGeneration, int numOfUn
         Chromosome *child1 = allocateChromosome(numOfUnits);
         Chromosome *child2 = allocateChromosome(numOfUnits);
 
-        if (rand() % 100 < CROSSOVER_RATE) {
-            // Crossover occurs: Copy parents' paths, then swap one path
-            child1->unitPaths = parent1->unitPaths;
-            child2->unitPaths = parent2->unitPaths;
+        child1->unitPaths = parent1->unitPaths;
+        child2->unitPaths = parent2->unitPaths;
 
+        if (rand() % 100 < CROSSOVER_RATE) {
             // Crossover occurs: Copy parents' steps, then swap one paths' steps
             child1->unitSteps = parent1->unitSteps;
             child2->unitSteps = parent2->unitSteps;
@@ -302,9 +290,6 @@ void Crossover(Chromosome **matingPool, Chromosome **nextGeneration, int numOfUn
             child2->needsFitnessEvaluation = true;
         } else {
             // No crossover: Simply copy the parents' entire path structure
-            child1->unitPaths = parent1->unitPaths;
-            child2->unitPaths = parent2->unitPaths;
-
             // Fitness is the same as parents', no recalculation needed
             child1->needsFitnessEvaluation = false;
             child2->needsFitnessEvaluation = false;
@@ -459,6 +444,64 @@ void Mutation(Chromosome **nextGeneration, int numOfUnits, int numOfHostageStati
     }
 }
 
+int partition(Chromosome** population, int low, int high) {
+    // Choose the last element as the pivot
+    Chromosome* pivot = population[high];
+
+    // Index of smaller element
+    int i = (low - 1);
+
+    for (int j = low; j <= high - 1; j++) {
+        // If current element is greater than or equal to pivot (for descending order)
+        if (population[j]->fitness > pivot->fitness) {
+            i++; // increment index of smaller element
+            swap(population[i], population[j]);
+        }
+    }
+
+    swap(population[i + 1], population[high]);
+    return (i + 1);
+}
+
+void quickSelect(Chromosome** population, int low, int high, int k) {
+    // If k is more than number of elements in array
+    if (k > 0 && k <= high - low + 1) {
+        // Partition the array around a pivot and get the pivot position
+        int pi = partition(population, low, high);
+
+        // If pivot is the k-th largest element
+        if (pi - low == k - 1) {
+            return; // Found the k-th element
+        }
+
+        // If pivot is greater than k-th largest, search in the left sub-array
+        if (pi - low > k - 1) {
+            quickSelect(population, low, pi - 1, k);
+        }
+
+        // If pivot is less than k-th largest, search in the right sub-array
+        // The k-th element in the right sub-array is the (k - (pi - low + 1))-th element
+        quickSelect(population, pi + 1, high, k - (pi - low + 1));
+    }
+}
+
+void PerformElitismAndReplacement(Chromosome **currentPopulation, Chromosome **offspringPopulation) {
+    quickSelect(currentPopulation, 0, POPULATION_SIZE - 1, NUM_OF_ELITS);
+    quickSelect(offspringPopulation, 0, POPULATION_SIZE - 1, POPULATION_SIZE - NUM_OF_ELITS);
+    int numOffspringToKeep = POPULATION_SIZE - NUM_OF_ELITS;
+    for (int i = NUM_OF_ELITS; i < POPULATION_SIZE; ++i) {
+        delete currentPopulation[i];
+        currentPopulation[i] = offspringPopulation[i-NUM_OF_ELITS];
+        offspringPopulation[i] = nullptr;
+    }
+    for (int i = numOffspringToKeep; i < POPULATION_SIZE; ++i) {
+        if (offspringPopulation[i] != nullptr) {
+            delete offspringPopulation[i];
+            offspringPopulation[i] = nullptr;
+        }
+    }
+}
+
 vector<vector<LocationID> > mainAlgorithm(const map<PathKey, vector<Point> > &pathsBetweenStations,
                                           int numOfUnits,
                                           int numOfHostageStations, HostageStation **HostageStations) {
@@ -484,16 +527,10 @@ vector<vector<LocationID> > mainAlgorithm(const map<PathKey, vector<Point> > &pa
 
         // 4. Evaluate Fitness of New Offspring
         // Only evaluates offspring marked as needing evaluation by Crossover/Mutation.
-        CalculatePopulationFitness(currentPopulation, pathsBetweenStations, HostageStations);
-        currentPopulation[0] = getFittestChromosome(currentPopulation);
-        Chromosome *ListFittest = getFittestChromosome(currentPopulation);
+        CalculatePopulationFitness(offspringPopulation, pathsBetweenStations, HostageStations);
 
-        for (int i = 1; i < POPULATION_SIZE; ++i) {
-            if(offspringPopulation[i-1] != ListFittest) {
-                currentPopulation[i] = offspringPopulation[i-1];
-            }
-        }
-
+        // 5. Creat the real next generation
+        PerformElitismAndReplacement(currentPopulation, offspringPopulation);
     }
 
     vector<vector<LocationID> > bestPlan = getFittestChromosome(currentPopulation)->unitPaths;

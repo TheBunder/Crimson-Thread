@@ -1,39 +1,32 @@
 #ifndef UNIT_H
 #define UNIT_H
+#include <queue>
 #include "Utils.h"
 
 class Unit {
 private:
     Point coords; // To hold x and y coordinates
-    // char standOn; // Which char he is standing on. saved to reput the char he runover.
-    map<PathKey, vector<Point> > &pathsBetweenStations;
-    vector<LocationID> &unitOperationOrder;
-    int currentStepInPath = 0;
-    PathKey currentPathKey;
-    int currentStationIndex = 0;
+    queue<Point> path{};
     bool finishedMission = false;
 
 public:
-    Unit(Point entrance, vector<LocationID> unitOperationOrder, map<PathKey, vector<Point>> &pathsBetweenStations);
+    void setPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations);
+
+    queue<Point> getPath();
+
+    Unit(Point entrance, vector<LocationID> &OperationOrder,
+               map<PathKey, vector<Point> > &pathsBetweenStations);
 
     int getX() const;
+
     int getY() const;
+
     Point getCoords() const;
+
     void setCoords(Point newPos);
 
     void move();
 
-    int getCurrentStepInPath() const;
-    void SetCurrentStepInPath(int current_step_in_path);
-
-    PathKey GetCurrentPathKey() const;
-    void SetCurrentPathKey(const PathKey &current_path_key);
-
-    int GetCurrentStationIndex() const;
-    void SetCurrentStationIndex(int current_station_index);
-
-    bool isFinished();
-
-    void swapUnits(Unit &other);
+    bool isFinished() const;
 };
 #endif // UNIT_H

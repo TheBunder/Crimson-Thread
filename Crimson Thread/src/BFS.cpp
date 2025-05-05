@@ -101,7 +101,8 @@ void BFS(char **grid, LocationID ID, Point start, Point *importantPoints, int im
          map<PathKey, vector<Point> > &pathsBetweenStations, mutex &pathMapMutex) {
     Point **parentGrid = allocateParentGrid();
     char **navGrid = allocateGrid();
-    // convert grid to navGrid
+
+    // Copy obstacle and empty cell information from the main grid to the navigation grid
     for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
         for (int x = 0; x < GRID_WIDTH; x++) {
             if ((unsigned char) grid[x][y] > 100) {
@@ -116,4 +117,5 @@ void BFS(char **grid, LocationID ID, Point start, Point *importantPoints, int im
     ReconstructPaths(parentGrid, ID, start, importantPoints, importantPointsSize, pathsBetweenStations, pathMapMutex);
 
     deallocateGrid(navGrid);
+    deallocateParentGrid(parentGrid);
 }

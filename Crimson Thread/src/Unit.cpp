@@ -4,16 +4,37 @@
 
 bool isLegal(int x, int y, char **grid);
 
-Unit::Unit(Point entrance, vector<LocationID> unitOperationOrder,
-           map<PathKey, vector<Point> > &pathsBetweenStations): coords(entrance),
-                                                                pathsBetweenStations(pathsBetweenStations),
-                                                                unitOperationOrder(unitOperationOrder) {
-    if (unitOperationOrder.size() >= 2) {
-        currentPathKey = make_pair(unitOperationOrder[0], unitOperationOrder[1]);
-    }
-    else {
+void Unit::setPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations) {
+    if (operationOrder.size() == 1) {
         finishedMission = true;
+    } else {
+        PathKey key;
+        for (int i = 1; i < operationOrder.size(); ++i) {
+            key = makeKey(operationOrder[i - 1], operationOrder[i]);
+            vector<Point> &currentPath = pathsBetweenStations[key];
+            if (operationOrder[i - 1] < operationOrder[i]) {
+                // If the starting ID is less than the ending ID, traverse the path vector forwards
+                for (int j = 1; j < currentPath.size(); ++j) {
+                    path.push(currentPath[j]); // Push a copy of the element onto the queue
+                }
+            }
+            else {
+                // If the starting ID is greater than to the ending ID, traverse the path vector backwards
+                for (int j = currentPath.size() - 1; j > 0; --j) {
+                    path.push(currentPath[j]); // Push a copy of the element onto the queue
+                }
+            }
+        }
     }
+}
+
+queue<Point> Unit::getPath() {
+    return path;
+}
+
+Unit::Unit(Point entrance, vector<LocationID> &OperationOrder,
+           map<PathKey, vector<Point> > &pathsBetweenStations): coords(entrance) {
+    setPath(OperationOrder, pathsBetweenStations);
 }
 
 int Unit::getX() const { return coords.x; }
@@ -25,56 +46,14 @@ void Unit::setCoords(Point newPos) {
 }
 
 void Unit::move() {
-    if (currentStepInPath < pathsBetweenStations[currentPathKey].size()) {
-        setCoords(pathsBetweenStations[currentPathKey][currentStepInPath]);
-        currentStepInPath++;
+    if (!path.empty()) {
+        setCoords(path.front());
+        path.pop();
     } else {
-        if (currentStationIndex + 1 < unitOperationOrder.size()) {
-            currentStepInPath = 1;
-            currentStationIndex++;
-            currentPathKey = makeKey(unitOperationOrder[currentStationIndex], unitOperationOrder[currentStationIndex + 1]);
-            move();
-        }
-        else {
-            finishedMission = true;
-        }
+        finishedMission = true;
     }
 }
 
-int Unit::getCurrentStepInPath() const {
-    return currentStepInPath;
-}
-
-void Unit::SetCurrentStepInPath(int current_step_in_path) {
-    currentStepInPath = current_step_in_path;
-}
-
-PathKey Unit::GetCurrentPathKey() const {
-    return currentPathKey;
-}
-
-void Unit::SetCurrentPathKey(const PathKey &current_path_key) {
-    currentPathKey = current_path_key;
-}
-
-int Unit::GetCurrentStationIndex() const {
-    return currentStationIndex;
-}
-
-void Unit::SetCurrentStationIndex(int current_station_index) {
-    currentStationIndex = current_station_index;
-}
-
-bool Unit::isFinished() {
+bool Unit::isFinished() const {
     return finishedMission;
-}
-
-void Unit::swapUnits(Unit& other)
-{
-    using std::swap;
-    swap(coords, other.coords);
-    swap(currentStepInPath, other.currentStepInPath);
-    swap(currentPathKey, other.currentPathKey);
-    swap(currentStationIndex, other.currentStationIndex);
-    swap(finishedMission, other.finishedMission);
 }

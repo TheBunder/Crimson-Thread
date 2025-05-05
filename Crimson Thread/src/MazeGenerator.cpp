@@ -279,7 +279,7 @@ void HostagesColor() {
 
 void UnitColor() {
     // Color name: Green3 - 40
-    printf("\033[38;5;40m");
+    printf("\033[38;5;226m");
 }
 
 void resetFG() {
@@ -294,7 +294,7 @@ void SearchedColor() {
 
 void PathColor() {
     // Color name: GreenYellow - 154
-    printf("\033[48;5;154m");
+    printf("\033[48;5;39m");
 }
 
 void resetBG() {
@@ -383,18 +383,65 @@ void PrintGridWithPath(char **grid, char **navGrid, vector<Point> path) {
     printf("\n");
 }
 
-void PrintGridWithUnits(char **grid, vector<Unit> units) {
+void PrintGridWithPath(char **grid, char **navGrid) {
+    bool fBGChanged = false;
+    for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
+        // Print left Y axis
+        printf("%02d ", y % 100); // Print Y coordinate (mod 100)
+
+        for (int x = 0; x < GRID_WIDTH; x++) {
+            if (navGrid[x][y] == kPath) {
+                PathColor();
+                fBGChanged = true;
+            }
+
+            if ((unsigned char) grid[x][y] > 100 || grid[x][y] == PATH) {
+                putchar(grid[x][y]);
+            } else {
+                if (grid[x][y] == HOSTAGES) {
+                    HostagesColor();
+                } else {
+                    UnitColor();
+                }
+                putchar(grid[x][y]);
+                resetFG();
+            }
+            if (fBGChanged) {
+                resetBG();
+                fBGChanged = false; // make zero
+            }
+        }
+
+        // Print right Y axis
+        printf(" %02d\n", y % 100);
+    }
+
+    printf("\n");
+}
+
+void markPath(vector<Unit> units, char **navGrid) {
+    for (Unit unit : units){
+        queue<Point> q = unit.getPath();
+        while (!q.empty()) {
+            navGrid[q.front().x][q.front().y] = kPath;
+            q.pop();
+        }
+    }
+}
+
+void PrintGridWithUnits(char **grid, vector<Unit> units, char **navGrid) {
     // Add units
     for (Unit unit : units){
         grid[unit.getX()][unit.getY()] = UNIT;
     }
 
     // Print
-    PrintGrid(grid);
+    PrintGridWithPath(grid, navGrid);
 
-    // Remove units
+    // Remove units and their path mark
     for (Unit unit : units){
         grid[unit.getX()][unit.getY()] = PATH;
+        navGrid[unit.getX()][unit.getY()] = kEmpty;
     }
 }
 
@@ -409,19 +456,34 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
                    map<PathKey, vector<Point> > &pathsBetweenStations) {
     vector<Unit> units{};
     creatUnits(units, numOfUnits, unitsEntrance, OperationOrder, pathsBetweenStations);
+
+    // Allocate and fill grid
+    char** navGrid = allocateGrid();
+    for (int i = 0; i < GRID_WIDTH; ++i) {
+        for (int j = 0; j < GRID_HEIGHT; ++j) {
+            navGrid[i][j] = kEmpty;
+        }
+    }
+    markPath(units, navGrid);
+
     while (!units.empty()) {
         for (int u = units.size()-1; u >= 0; --u) {
             if (units[u].isFinished()) {
                 // Remove the station using swap and pop
-                units[u].swapUnits(units.back());
+                swap(units[u], units.back());
                 units.pop_back();
             }
             else {
                 units[u].move();
             }
         }
+
         COORD coord = { 0, 1 };
         SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
-        PrintGridWithUnits(grid, units);
+
+        PrintGridWithUnits(grid, units, navGrid);
     }
+
+    // deallocate and fill grid
+    deallocateGrid(navGrid);
 }
