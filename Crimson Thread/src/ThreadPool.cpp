@@ -51,7 +51,7 @@ ThreadPool::~ThreadPool()
     }
 }
 
-void ThreadPool::enqueue(std::function<void()> task)
+void ThreadPool::Enqueue(std::function<void()> task)
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex_);
@@ -81,7 +81,7 @@ void ThreadPool::enqueue(std::function<void()> task)
     cv_.notify_one();
 }
 
-void ThreadPool::wait_all() {
+void ThreadPool::WaitAll() {
     std::unique_lock<std::mutex> lock(queue_mutex_);
     tasks_done_cv_.wait(lock, [this]() {
         return active_tasks_ == 0 && tasks_.empty();

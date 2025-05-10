@@ -5,7 +5,7 @@
 #include "include/Utils.h"
 
 //----FUNCTIONS-------------------------------------------------------
-Point **allocateParentGrid() {
+Point **AllocateParentGrid() {
     Point **grid = new Point *[GRID_WIDTH];
     for (int i = 0; i < GRID_WIDTH; i++) {
         grid[i] = new Point[GRID_HEIGHT];
@@ -13,7 +13,7 @@ Point **allocateParentGrid() {
     return grid;
 }
 
-void deallocateParentGrid(Point ** grid) {
+void DeallocateParentGrid(Point ** grid) {
     for (int i = 0; i < GRID_WIDTH; i++) {
         delete grid[i];
     }
@@ -85,26 +85,37 @@ void Search(char **grid, Point start, Point **parentGrid) {
 
     int x = start.x;
     int y = start.y;
+
+    // Add the starting point to the queue and mark it as visited in the grid.
     AddToOpen(x, y, uncheckedPoints, grid);
 
+    // Continue the search as long as there are points left in the queue.
     while (!uncheckedPoints.empty()) {
+        // Get the next point from the front of the queue and remove it.
         Point currentPoint = uncheckedPoints.front();
         uncheckedPoints.pop();
 
+        // Mark the current point in the grid as fully searched.
         grid[currentPoint.x][currentPoint.y] = State::kSearched;
 
+        // Explore the neighbors of the current point.
+        // Add valid, unvisited neighbors to the queue and record the current point as their parent.
         ExpandNeighbors(currentPoint, uncheckedPoints, grid, parentGrid);
     }
 }
 
 void BFS(char **grid, LocationID ID, Point start, Point *importantPoints, int importantPointsSize,
          map<PathKey, vector<Point> > &pathsBetweenStations, mutex &pathMapMutex) {
-    Point **parentGrid = allocateParentGrid();
-    char **navGrid = allocateGrid();
+    // Allocate memory for the parent grid, used to reconstruct paths after the search.
+    Point **parentGrid = AllocateParentGrid();
+    // Allocate memory for a navigation grid, used by the search algorithm.
+    char **navGrid = AllocateGrid();
 
-    // Copy obstacle and empty cell information from the main grid to the navigation grid
+    // Prepare the navigation grid by copying obstacle and empty cell information
+    // from the main grid. The BFS will operate on this navGrid.
     for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
         for (int x = 0; x < GRID_WIDTH; x++) {
+            // Check if wall
             if ((unsigned char) grid[x][y] > 100) {
                 navGrid[x][y] = kObstacle;
             } else {
@@ -112,10 +123,16 @@ void BFS(char **grid, LocationID ID, Point start, Point *importantPoints, int im
             }
         }
     }
+
+    // Perform the actual Breadth-First Search starting from the 'start' point
+    // on the prepared navigation grid. Populates the parentGrid for path reconstruction.
     Search(navGrid, start, parentGrid);
 
+    // Reconstruct paths from the 'start' point (identified by 'ID') to all points in the 'importantPoints' array.
     ReconstructPaths(parentGrid, ID, start, importantPoints, importantPointsSize, pathsBetweenStations, pathMapMutex);
 
-    deallocateGrid(navGrid);
-    deallocateParentGrid(parentGrid);
+    // Deallocate the memory used by the temporary navigation grid.
+    DeallocateGrid(navGrid);
+    // Deallocate the memory used by the parent grid.
+    DeallocateParentGrid(parentGrid);
 }

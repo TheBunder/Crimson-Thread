@@ -19,10 +19,10 @@ public:
     ~ThreadPool();
 
     // Enqueue task for execution by the thread pool
-    void enqueue(std::function<void()> task);
+    void Enqueue(std::function<void()> task);
 
     // Wait for all the thread to finish running
-    void wait_all();
+    void WaitAll();
 private:
     // Vector to store worker threads
     std::vector<std::thread> threads_;

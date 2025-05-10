@@ -2,7 +2,7 @@
 #include "include/Utils.h"
 
 //----FUNCTIONS-------------------------------------------------------
-char **allocateGrid() {
+char **AllocateGrid() {
 	char **grid = new char *[GRID_WIDTH];
 	for (int i = 0; i < GRID_WIDTH; i++) {
 		grid[i] = new char[GRID_HEIGHT]();
@@ -10,7 +10,7 @@ char **allocateGrid() {
 	return grid;
 }
 
-void deallocateGrid(char** grid) {
+void DeallocateGrid(char** grid) {
 	for (int i = 0; i < GRID_WIDTH; i++) {
 		delete[] grid[i];
 	}
@@ -25,6 +25,6 @@ int IsInArrayBounds(int x, int y)
 	return true;
 }
 
-PathKey makeKey(LocationID id1, LocationID id2) {
+PathKey MakeKey(LocationID id1, LocationID id2) {
 	return std::make_pair(std::min(id1, id2), std::max(id1, id2));
 }

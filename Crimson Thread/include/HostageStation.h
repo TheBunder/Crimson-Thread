@@ -20,18 +20,18 @@ public:
         double kidnapperChance, double soldierLossChance);
 
     // Getters
-    int getX() const;
-    int getY() const;
-    Point getCoords() const;
-    int getSubgridAffiliation() const;
-    double getHostageChance() const;
-    int getNumHostages() const;
-    double getKidnapperChance() const;
-    double getSoldierLossChance() const;
-    double getPValue() const;
+    int GetX() const;
+    int GetY() const;
+    Point GetCoords() const;
+    int GetSubgridAffiliation() const;
+    double GetHostageChance() const;
+    int GetNumHostages() const;
+    double GetKidnapperChance() const;
+    double GetSoldierLossChance() const;
+    double GetPValue() const;
 
     // Print Info Method
-    void printInfo() const;
+    void PrintInfo() const;
 };
 
 #endif // HOSTAGESTATION_H

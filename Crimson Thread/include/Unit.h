@@ -10,23 +10,23 @@ private:
     bool finishedMission = false;
 
 public:
-    void setPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations);
+    void SetPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations);
 
-    queue<Point> getPath();
+    queue<Point> GetPath();
 
     Unit(Point entrance, vector<LocationID> &OperationOrder,
                map<PathKey, vector<Point> > &pathsBetweenStations);
 
-    int getX() const;
+    int GetX() const;
 
-    int getY() const;
+    int GetY() const;
 
-    Point getCoords() const;
+    Point GetCoords() const;
 
-    void setCoords(Point newPos);
+    void SetCoords(Point newPos);
 
-    void move();
+    void Move();
 
-    bool isFinished() const;
+    bool IsFinished() const;
 };
 #endif // UNIT_H

@@ -84,9 +84,9 @@ typedef struct Point {
 } Point;
 
 //----FUNCTION DECLARATIONS------------------------------------------
-char** allocateGrid();
-void deallocateGrid(char** grid);
+char** AllocateGrid();
+void DeallocateGrid(char** grid);
 int IsInArrayBounds(int x, int y);
-PathKey makeKey(LocationID id1, LocationID id2); // Function to ensure consistent key ordering
+PathKey MakeKey(LocationID id1, LocationID id2); // Function to ensure consistent key ordering
 
 #endif
