@@ -91,7 +91,7 @@ Chromosome *GetFittestChromosome(Chromosome **chromosomeArray, HostageStation **
 
         // Check if we found a better chromosome
         if (chromosomePValue > fittestPValue) {
-            // Set the chromosome as the current best and save its' fitness
+            // Set the chromosome as the current best and save its fitness
             fittest = chromosomeArray[i];
             fittestPValue = chromosomePValue;
         }
@@ -123,6 +123,7 @@ Chromosome *AllocateChromosome(int numOfUnits) {
     Chromosome *chromosome = new Chromosome;
     chromosome->unitPaths.resize(numOfUnits);
     chromosome->unitSteps.resize(numOfUnits, 0);
+    chromosome->needsFitnessEvaluation  = true;
     return chromosome;
 }
 
@@ -140,7 +141,7 @@ void DeallocateChromosomePopulation(Chromosome **chromosomeArray) {
     for (int i = 0; i < POPULATION_SIZE; i++) {
         delete chromosomeArray[i];
     }
-    delete chromosomeArray;
+    delete[] chromosomeArray;
 }
 
 void InsertStationToPath(Chromosome *chromosome, int unit) {
@@ -166,7 +167,7 @@ void ResetAvailable(vector<int> *availableStations, int numOfHostageStations) {
 // Check if we can reach the Point within the budget limit.
 bool IsReachable(Chromosome *chromosome, int unit, LocationID station,
                  const map<PathKey, vector<Point> > &pathsBetweenStations) {
-    // Get cuurent path length.
+    // Get current path length.
     int pathCost = GetPathCost(chromosome->unitPaths[unit].back(), station, pathsBetweenStations);
 
     // Check if getting to the Point will exceed the budget
@@ -178,13 +179,13 @@ void PrintUnitPaths(const vector<vector<LocationID>> &unitPaths) {
     // Print a header for the unit paths section.
     printf("Unit Paths:\n");
 
-    for (size_t unitIndex = 0; unitIndex < unitPaths.size(); ++unitIndex) {
-        printf("Unit %zu: ", unitIndex);
-        if (unitPaths[unitIndex].empty()) {
+    for (size_t u = 0; u < unitPaths.size(); ++u) {
+        printf("Unit %zu: ", u);
+        if (unitPaths[u].empty()) {
             printf("[]\n"); // Empty path
         } else {
             // Print the IDs of the unit
-            for (int locationId: unitPaths[unitIndex]) {
+            for (int locationId: unitPaths[u]) {
                 printf("%d ", locationId);
             }
             printf("\n");
@@ -202,21 +203,22 @@ void PrintUnitSteps(const vector<int> &unitSteps) {
 }
 
 // Function to print Chromosome information
-void PrintChromosomeInfo(const Chromosome &chromosome, int chromosomeIndex) {
+void PrintChromosomeInfo(const Chromosome *chromosome, int chromosomeIndex) {
     printf("Chromosome %d:\n", chromosomeIndex); // Add an index for readability
-    printf("Valid: %s\n", chromosome.isValid ? "true" : "false");
-    printf("Fitness: %.2f\n", chromosome.fitness);
+    printf("Valid: %s\n", chromosome->isValid ? "true" : "false");
+    printf("Fitness: %.2f\n", chromosome->fitness);
 
     // Print unit paths
-    PrintUnitPaths(chromosome.unitPaths);
+    PrintUnitPaths(chromosome->unitPaths);
 
     // Print unit steps
-    PrintUnitSteps(chromosome.unitSteps);
+    PrintUnitSteps(chromosome->unitSteps);
 }
 
 void Initialization(Chromosome **chromosomeArray, const map<PathKey, vector<Point> > &pathsBetweenStations,
-                    int numOfHostageStations,
-                    int numOfUnits) {
+                    int numOfUnits,
+                    int numOfHostageStations
+                    ) {
     // Initialize available stations (0 to 16)
     vector<int> availableStations;
 
@@ -229,9 +231,11 @@ void Initialization(Chromosome **chromosomeArray, const map<PathKey, vector<Poin
             InsertStationToPath(chromosomeArray[c], u);
         }
 
+        bool allStationsAssigned = false;
+
         // Add stations to each unit
         int numAttemptsToAdd = 20;
-        for (int i = 0; i < numAttemptsToAdd; i++) {
+        for (int i = 0; i < numAttemptsToAdd && !allStationsAssigned; i++) {
             int u = rand() % numOfUnits;
             int randomIndex = rand() % availableStations.size();
             int randomStation = availableStations[randomIndex];
@@ -241,8 +245,15 @@ void Initialization(Chromosome **chromosomeArray, const map<PathKey, vector<Poin
                 // Remove the station using swap and pop
                 swap(availableStations[randomIndex], availableStations.back());
                 availableStations.pop_back();
+
+                // Check if all stesions were assigned
+                if (availableStations.empty()) {
+                    allStationsAssigned = true;
+                }
             }
         }
+
+        // PrintChromosomeInfo(chromosomeArray[c], c);
     }
 }
 
@@ -268,13 +279,17 @@ void EvaluatePopulationFitness(Chromosome **chromosomeArray, const map<PathKey, 
     for (int i = 0; i < POPULATION_SIZE; ++i) {
         // Check if the chromosome needs fitness evaluation.
         if (chromosomeArray[i]->needsFitnessEvaluation) {
-            // Submit a task to the thread pool to calculate fitness for this chromosome.
-            // Capture i by value and use references for the constant data
-            pool.Enqueue([i, chromosomeArray, &pathsBetweenStations, HostageStations]() {
-                CalculateFitness(chromosomeArray[i], pathsBetweenStations, HostageStations);
-            });
+            // // Submit a task to the thread pool to calculate fitness for this chromosome.
+            // // Capture i by value and use references for the constant data
+            // pool.Enqueue([i, chromosomeArray, &pathsBetweenStations, HostageStations]() {
+            //     CalculateFitness(chromosomeArray[i], pathsBetweenStations, HostageStations);
+            // });
+
+            // Calculate fitness without threading
+            CalculateFitness(chromosomeArray[i], pathsBetweenStations, HostageStations);
         }
     }
+
     // Wait for all submitted tasks to complete.
     pool.WaitAll();
 }
@@ -283,7 +298,7 @@ void Selection(Chromosome **chromosomeArray, Chromosome **matingPool) {
     // Creat an arena to preform the tournament
     Chromosome **arena = new Chromosome *[TOURNAMENT_SIZE];
     for (int i = 0; i < POPULATION_SIZE; ++i) {
-        // Insert 5  random chromosomes into the arena
+        // Insert TOURNAMENT_SIZE random chromosomes into the arena
         for (int j = 0; j < TOURNAMENT_SIZE; ++j) {
             arena[j] = chromosomeArray[rand() % POPULATION_SIZE];
         }
@@ -296,7 +311,7 @@ void Selection(Chromosome **chromosomeArray, Chromosome **matingPool) {
 }
 
 void Crossover(Chromosome **matingPool, Chromosome **nextGeneration, int numOfUnits) {
-    for (int i = 0; i < POPULATION_SIZE; i += 2) {
+    for (int i = 0; i < POPULATION_SIZE - 1; i += 2) {
         // Save a pointer to two parent chromosomes
         Chromosome *parent1 = matingPool[i];
         Chromosome *parent2 = matingPool[i + 1];
@@ -305,15 +320,14 @@ void Crossover(Chromosome **matingPool, Chromosome **nextGeneration, int numOfUn
         Chromosome *child1 = AllocateChromosome(numOfUnits);
         Chromosome *child2 = AllocateChromosome(numOfUnits);
 
-        // Set the childrens paths like thier parents
+        // Set the children paths and step count like their parents
         child1->unitPaths = parent1->unitPaths;
         child2->unitPaths = parent2->unitPaths;
+        child1->unitSteps = parent1->unitSteps;
+        child2->unitSteps = parent2->unitSteps;
 
         if (rand() % 100 < CROSSOVER_RATE) {
-            // Crossover occurs: Copy parents' steps, then swap one paths' steps
-            child1->unitSteps = parent1->unitSteps;
-            child2->unitSteps = parent2->unitSteps;
-
+            // Crossover occurs: Swap one paths' steps
             int randUnitIndex = rand() % numOfUnits;
 
             // Swap one unitPath and step count
@@ -328,8 +342,10 @@ void Crossover(Chromosome **matingPool, Chromosome **nextGeneration, int numOfUn
         } else {
             // No crossover: Simply copy the parents' entire path structure
             // Fitness is the same as parents', no recalculation needed
-            child1->needsFitnessEvaluation = false;
-            child2->needsFitnessEvaluation = false;
+            child1->needsFitnessEvaluation = parent1->needsFitnessEvaluation;
+            child2->needsFitnessEvaluation = parent2->needsFitnessEvaluation;
+            child1->isValid = parent1->isValid;
+            child2->isValid = parent2->isValid;
             child1->fitness = parent1->fitness;
             child2->fitness = parent2->fitness;
         }
@@ -394,7 +410,7 @@ bool AddStationToRandomUnitPath(Chromosome *chromosome, int numOfUnits, int numO
         return  true;
     }
 
-    // Return that the chromosome wasn't mutated
+    // Return that the chromosome wasn't mutated due to budget constraints
     return false;
 }
 
@@ -402,70 +418,101 @@ bool RemoveStationFromRandomUnitPath(Chromosome *chromosome,
                                      int numOfUnits, const map<PathKey, vector<Point> > &pathsBetweenStations) {
     // Chose a random unit.
     int randUnitIndex = rand() % numOfUnits;
-    // Malke a coppy of the unit assigned stations.
+
+    // Get a pointer to the unit assigned stations.
     vector<LocationID> &selectedPath = chromosome->unitPaths[randUnitIndex];
     int numberOfStops = selectedPath.size();
+
     // Check if unit have assigned stations.
     if (numberOfStops > 1) {
         // Chose a random station and remove it from the plan.
         int randomStation = rand() % (numberOfStops - 1) + 1;
         selectedPath.erase(selectedPath.begin() + randomStation);
-        // Reevaluate the unit path
+
+        // Reevaluate the unit path.
         chromosome->unitSteps[randUnitIndex] = PathDistance(selectedPath, pathsBetweenStations);
 
-        // Return that the chromosome was mutated
+        // Return that the chromosome was mutated.
         return  true;
     }
 
-    // Return that the chromosome wasn't mutated
+    // Return that the chromosome wasn't mutated due to not having eligible units.
     return false;
 }
 
 bool SwapStationFromRandomUnitPath(Chromosome *chromosome,
                                    int numOfUnits, const map<PathKey, vector<Point> > &pathsBetweenStations) {
     int randomIndex1, randomIndex2;
-    // Select a random unit.
-    int randUnitIndex = rand() % numOfUnits;
-    // Create temporary copy of the selected unit's path to test the swap.
-    vector<LocationID> testPath = chromosome->unitPaths[randUnitIndex];
-    int numberOfStops = testPath.size();
-    // Check if the path has at least 3 locations (start + at least two stops to swap).
-    if (numberOfStops >= 3) {
-        // Generate 2 random stations.
-        do {
-            randomIndex1 = rand() % (numberOfStops - 1) + 1;
-            randomIndex2 = rand() % (numberOfStops - 1) + 1;
-        } while (randomIndex1 == randomIndex2);
 
-        // Swap the order of arrival
-        swap(testPath[randomIndex1], testPath[randomIndex2]);
-
-        // Check if the plan is executable under the step restriction.
-        int testPathDistance = PathDistance(testPath, pathsBetweenStations);
-        if (testPathDistance < UNIT_STEP_BUDGET) {
-            // Make the tested change on the real chromosome
-            vector<LocationID> &selectedPath = chromosome->unitPaths[randUnitIndex];
-            swap(selectedPath[randomIndex1], selectedPath[randomIndex2]);
-            chromosome->unitSteps[randUnitIndex] = testPathDistance;
-
-            // Return that the chromosome was mutated
-            return  true;
+    // Find all eligible units (those with at least 2 stops to swap)
+    vector<int> eligibleUnits;
+    for (int i = 0; i < numOfUnits; i++) {
+        if (chromosome->unitPaths[i].size() >= 3) { // Start + at least 2 stops
+            eligibleUnits.push_back(i);
         }
     }
 
-    // Return that the chromosome wasn't mutated
+    // Need at least 1 eligible unit
+    if (eligibleUnits.empty()) {
+        return false;
+    }
+
+    // Select a random eligible unit
+    int randUnitIndex = eligibleUnits[rand() % eligibleUnits.size()];
+    vector<LocationID> &selectedPath = chromosome->unitPaths[randUnitIndex];
+
+    int numberOfStops = selectedPath.size();
+
+    // Generate 2 random stations.
+    randomIndex1 = rand() % (numberOfStops - 1) + 1;
+    do {
+        randomIndex2 = rand() % (numberOfStops - 1) + 1;
+    } while (randomIndex1 == randomIndex2);
+
+    // Swap the order of arrival.
+    swap(selectedPath[randomIndex1], selectedPath[randomIndex2]);
+
+    // Check if the plan is executable under the step restriction.
+    int testPathDistance = PathDistance(selectedPath, pathsBetweenStations);
+    if (testPathDistance < UNIT_STEP_BUDGET) {
+        chromosome->unitSteps[randUnitIndex] = testPathDistance;
+
+        // Return that the chromosome was mutated
+        return  true;
+    }
+
+    // If not in budget
+    // Revert change
+    swap(selectedPath[randomIndex1], selectedPath[randomIndex2]);
+
+    // Return that the chromosome wasn't mutated due to budget constraints
     return false;
 }
 
 bool SwapStationBetweenRandomUnitsPath(Chromosome *chromosome,
                                        int numOfUnits, const map<PathKey, vector<Point> > &pathsBetweenStations) {
-    int randUnitIndex1, randUnitIndex2;
+    // Find all eligible units (those with at least 2 stops)
+    vector<int> eligibleUnits;
+    for (int i = 0; i < numOfUnits; i++) {
+        if (chromosome->unitPaths[i].size() >= 3) { // Start + at least 2 stops
+            eligibleUnits.push_back(i);
+        }
+    }
 
-    // Generate 2 random units.
+    // Need at least 2 eligible units to perform a swap
+    if (eligibleUnits.size() < 2) {
+        return false;
+    }
+
+    // Select two different units randomly
+    int randIndex1 = rand() % eligibleUnits.size();
+    int randIndex2;
     do {
-        randUnitIndex1 = rand() % numOfUnits;
-        randUnitIndex2 = rand() % numOfUnits;
-    } while (randUnitIndex1 == randUnitIndex2);
+        randIndex2 = rand() % eligibleUnits.size();
+    } while (randIndex1 == randIndex2);
+
+    int randUnitIndex1 = eligibleUnits[randIndex1];
+    int randUnitIndex2 = eligibleUnits[randIndex2];
 
     // Make a copy of their path plan
     vector<LocationID> testPath1 = chromosome->unitPaths[randUnitIndex1];
@@ -475,7 +522,7 @@ bool SwapStationBetweenRandomUnitsPath(Chromosome *chromosome,
     int numberOfStops1 = testPath1.size();
     int numberOfStops2 = testPath2.size();
 
-    // Get random station from each one of theme
+    // Get random station positions (skip the first position which is the start)
     int randomIndex1 = rand() % (numberOfStops1 - 1) + 1;
     int randomIndex2 = rand() % (numberOfStops2 - 1) + 1;
 
@@ -483,6 +530,7 @@ bool SwapStationBetweenRandomUnitsPath(Chromosome *chromosome,
     swap(testPath1[randomIndex1], testPath2[randomIndex2]);
     int testPathDistance1 = PathDistance(testPath1, pathsBetweenStations);
     int testPathDistance2 = PathDistance(testPath2, pathsBetweenStations);
+
     if (testPathDistance1 < UNIT_STEP_BUDGET && testPathDistance2 < UNIT_STEP_BUDGET) {
         // If in budget, make the change on the real thing
         vector<LocationID> &selectedPath1 = chromosome->unitPaths[randUnitIndex1];
@@ -495,7 +543,7 @@ bool SwapStationBetweenRandomUnitsPath(Chromosome *chromosome,
         return  true;
     }
 
-    // Return that the chromosome wasn't mutated
+    // Return that the chromosome wasn't mutated due to budget constraints
     return false;
 }
 
@@ -520,7 +568,7 @@ void Mutation(Chromosome **nextGeneration, int numOfUnits, int numOfHostageStati
         if (rand() % 100 < MUTATION_RATE) {
 
             if (Mutate(nextGeneration[i], numOfUnits, numOfHostageStations,
-                                       pathsBetweenStations)) { // If any mutation type reported a change
+                                       pathsBetweenStations)) { // Mutate, and if any mutation type reported a change
                 nextGeneration[i]->needsFitnessEvaluation = true; // Mark for re-evaluation
             }
         }
@@ -581,7 +629,7 @@ void PerformElitismAndReplacement(Chromosome **currentPopulation, Chromosome **o
     for (int i = NUM_OF_ELITS; i < POPULATION_SIZE; ++i) {
         delete currentPopulation[i]; // Delete the old, less fit chromosome.
         currentPopulation[i] = offspringPopulation[i-NUM_OF_ELITS];  // Replace with a fitter offspring.
-        offspringPopulation[i] = nullptr; // Nullify offspring pointer to prevent double deletion.
+        offspringPopulation[i-NUM_OF_ELITS] = nullptr; // Nullify offspring pointer to prevent double deletion.
     }
 
     // Delete the offspring chromosomes that were not selected for the next generation.
@@ -605,7 +653,7 @@ vector<vector<LocationID> > MainAlgorithm(const map<PathKey, vector<Point> > &pa
     Chromosome **offspringPopulation = (Chromosome **) malloc(sizeof(Chromosome *) * POPULATION_SIZE);
 
     // Create and evaluate Generation 0
-    Initialization(currentPopulation, pathsBetweenStations, numOfHostageStations, numOfUnits);
+    Initialization(currentPopulation, pathsBetweenStations, numOfUnits, numOfHostageStations);
     EvaluatePopulationFitness(currentPopulation, pathsBetweenStations, HostageStations, pool);
 
     for (int G = 0; G < GENERATIONS; ++G) {
@@ -616,7 +664,7 @@ vector<vector<LocationID> > MainAlgorithm(const map<PathKey, vector<Point> > &pa
         // Offspring chromosomes are newly allocated. Pointers stored in offspringPopulation.
         Crossover(matingPool, offspringPopulation, numOfUnits);
 
-        // 3. Mutation: Apply mutations to some of the newly created offspring (in offspringPopulation)
+        // // 3. Mutation: Apply mutations to some of the newly created offspring (in offspringPopulation)
         Mutation(offspringPopulation, numOfUnits, numOfHostageStations, pathsBetweenStations);
 
         // 4. Evaluate Fitness of New Offspring using the thread pool

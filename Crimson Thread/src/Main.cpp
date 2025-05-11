@@ -21,7 +21,8 @@ void FillImportantPoints(Point *importantPoints, HostageStation **HostageStation
 
 int main() {
     // prep
-    auto start_iteration = std::chrono::high_resolution_clock::now();
+    system("CLS");
+    auto startProgram = std::chrono::high_resolution_clock::now();
     EnableAnsiEscapeCodes(); // Used to enable
 	srand(time(0)); // seed random number generator.
 
@@ -59,24 +60,33 @@ int main() {
     pool.WaitAll();
 
     // End Path finding time and print it
-    auto end_iteration = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_iteration = end_iteration - start_iteration;
+    auto endPathFinding = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed_iteration = endPathFinding - startProgram;
     printf("Path finding execution time: %fl seconds\n", elapsed_iteration.count());
 
     // Main algorithm
-    vector<vector<LocationID>> answer = MainAlgorithm(pathsBetweenStations, numOfSections, numOfUnits, HostageStations);
+    auto startGA = std::chrono::high_resolution_clock::now();
+    vector<vector<LocationID>> answer = MainAlgorithm(pathsBetweenStations, numOfUnits, numOfSections , HostageStations);
+
+    // Print GA running execution time
+    auto endGA = std::chrono::high_resolution_clock::now();
+    elapsed_iteration = endGA - startGA;
+    printf("\nGenetic algorithm execution time: %fl seconds\n", elapsed_iteration.count());
+
     // Print total Pvalue
     printf("Total PValue for the mission: %.2f\n", SumPValue(answer, HostageStations));
 
+    // Show the best operation found
     ShowOperation(grid, numOfUnits, unitsEntrance, answer, pathsBetweenStations);
 
     // Deallocate space
     DeallocateGrid(grid);
     DeallocateHostageStations(HostageStations, numOfSections);
     delete[] importantPoints;
+
     // Print running time
-    end_iteration = std::chrono::high_resolution_clock::now();
-    elapsed_iteration = end_iteration - start_iteration;
+    endPathFinding = std::chrono::high_resolution_clock::now();
+    elapsed_iteration = endPathFinding - startProgram;
     printf("\nTotal execution time: %fl seconds", elapsed_iteration.count());
 }
 

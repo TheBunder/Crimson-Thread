@@ -340,6 +340,12 @@ void PathColor() {
     printf("\033[48;5;39m");
 }
 
+void FinishedPathColor() {
+    // Color name: BlueViolet  - 57
+    printf("\033[48;5;57m");
+}
+
+
 void ResetBG() {
     // Reset BG back to black
     printf("\033[48;5;0m");
@@ -440,7 +446,13 @@ void PrintGridWithPath(char **grid, char **navGrid) {
         printf("%02d ", y % 100); // Print Y coordinate (mod 100)
 
         for (int x = 0; x < GRID_WIDTH; x++) {
-            if (navGrid[x][y] == kPath) {
+
+            if (navGrid[x][y] == -1) {
+                // Mark finished path by changing BG color
+                FinishedPathColor();
+                fBGChanged = true;
+            }
+            else if (navGrid[x][y] > 0) {
                 // Mark path by changing BG color
                 PathColor();
                 fBGChanged = true;
@@ -476,7 +488,7 @@ void MarkPath(vector<Unit> units, char **navGrid) {
     for (Unit unit : units){
         queue<Point> q = unit.GetPath();
         while (!q.empty()) {
-            navGrid[q.front().x][q.front().y] = kPath;
+            navGrid[q.front().x][q.front().y]++;
             q.pop();
         }
     }
@@ -494,7 +506,9 @@ void PrintGridWithUnits(char **grid, vector<Unit> units, char **navGrid) {
     // Remove units and their path mark
     for (Unit unit : units){
         grid[unit.GetX()][unit.GetY()] = PATH;
-        navGrid[unit.GetX()][unit.GetY()] = kEmpty;
+        if (--navGrid[unit.GetX()][unit.GetY()] == 0) { // If no more units will wolk there mark as empty
+            navGrid[unit.GetX()][unit.GetY()] = -1;
+        }
     }
 }
 
@@ -507,6 +521,10 @@ void CreatUnits(vector<Unit> &units, int numOfUnits, Point unitsEntrance, vector
 
 void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vector<LocationID> > &OperationOrder,
                    map<PathKey, vector<Point> > &pathsBetweenStations) {
+    // Get console handle
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    // Creat units
     vector<Unit> units{};
     CreatUnits(units, numOfUnits, unitsEntrance, OperationOrder, pathsBetweenStations);
 
@@ -538,8 +556,8 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
         }
 
         // Reset the pointer of the print to print of the previews "frame" to cause animation effect.
-        COORD coord = { 0, 1 };
-        SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+        COORD coord = { 0, 5 };
+        SetConsoleCursorPosition(hConsole, coord);
 
         // Print the frame
         PrintGridWithUnits(grid, units, navGrid);
