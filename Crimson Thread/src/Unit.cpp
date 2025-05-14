@@ -53,9 +53,11 @@ void Unit::SetCoords(Point newPos) {
     coords = newPos;
 }
 
-void Unit::Move() {
+void Unit::Move(char** grid) {
     if (!path.empty()) {
-        SetCoords(path.front());
+        Point newPos = path.front();
+        SetStandOn(grid[newPos.x][newPos.y]);
+        SetCoords(newPos);
         path.pop();
     } else {
         finishedMission = true;
@@ -64,4 +66,23 @@ void Unit::Move() {
 
 bool Unit::IsFinished() const {
     return finishedMission;
+}
+
+char Unit::GetStandOn() const {
+    return standOn;
+}
+
+void Unit::SetStandOn(char stand_on) {
+    standOn = stand_on;
+}
+
+Point Unit::GetPreviousCoords() const {
+    return previousCoords;
+}
+
+void Unit::SetPreviousCoords(const Point &previous_coords) {
+    previousCoords = previous_coords;
+}
+void Unit::SetPreviousCoords(int x, int y) {
+    previousCoords = Point(x, y);
 }

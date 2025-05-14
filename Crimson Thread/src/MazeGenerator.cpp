@@ -482,6 +482,33 @@ void PrintGridWithPath(char **grid, char **navGrid) {
     printf("\n");
 }
 
+void PrintCharInGrid(int x, int y, char **navGrid, char c) {
+    // Set background color
+    if (navGrid[x][y] == -1) {
+        // Mark finished path by changing BG color
+        FinishedPathColor();
+    } else if (navGrid[x][y] > 0) {
+        // Mark path by changing BG color
+        PathColor();
+    }
+
+    // Print with specific color
+    if (c!=PATH) {
+        if (c == HOSTAGES) {
+            HostagesColor();
+        } else {
+            UnitColor();
+        }
+    }
+
+    // Put the char
+    putchar(c);
+
+    // Reset colors
+    ResetFG();
+    ResetBG();
+}
+
 void MarkPath(vector<Unit> units, char **navGrid) {
     for (Unit unit: units) {
         queue<Point> q = unit.GetPath();
@@ -504,6 +531,41 @@ void PrintGridWithUnits(char **grid, vector<Unit> units, char **navGrid) {
     // Remove units and their path mark
     for (Unit unit: units) {
         grid[unit.GetX()][unit.GetY()] = PATH;
+        if (--navGrid[unit.GetX()][unit.GetY()] == 0) {
+            // If no more units will wolk there mark as empty
+            navGrid[unit.GetX()][unit.GetY()] = -1;
+        }
+    }
+}
+
+void ShowNextFrame(char **grid, vector<Unit> units, char **navGrid, HANDLE hConsole) {
+    // Add units
+    for (Unit unit: units) {
+        // Get position to change
+        int unitX = unit.GetX();
+        int unitY = unit.GetY();
+
+        // Set cursor in the correct position
+        COORD coord = {(short)(unitX+3), (short)(GRID_HEIGHT-unitY-1)};
+        SetConsoleCursorPosition(hConsole, coord);
+
+        // Print the unit
+        PrintCharInGrid(unitX, unitY, navGrid, UNIT);
+    }
+
+    // Remove units and their path mark
+    for (Unit unit: units) {
+        // Get position to change
+        Point previousCoords = unit.GetPreviousCoords();
+        int unitX = previousCoords.x;
+        int unitY = previousCoords.y;
+
+        // Set cursor in the correct position
+        COORD coord = {(short)(unitX+3), (short)(GRID_HEIGHT-unitY-1)};
+        SetConsoleCursorPosition(hConsole, coord);
+
+        // Print the unit
+        PrintCharInGrid(unitX, unitY, navGrid, PATH);
         if (--navGrid[unit.GetX()][unit.GetY()] == 0) {
             // If no more units will wolk there mark as empty
             navGrid[unit.GetX()][unit.GetY()] = -1;
@@ -540,11 +602,14 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
     // Fill the path the units will take
     MarkPath(units, navGrid);
 
-    while (!units.empty()) {
-        // Move to a good location to print the simulation
-        COORD coord = {0, 5};
-        SetConsoleCursorPosition(hConsole, coord);
+    // Move to a good location to print the simulation
+    COORD coord = {0, 0};
+    SetConsoleCursorPosition(hConsole, coord);
 
+    // Print the frame
+    PrintGridWithUnits(grid, units, navGrid);
+
+    while (!units.empty()) {
         // Move all units and remove those that finished their operation.
         for (int u = units.size() - 1; u >= 0; --u) {
             if (units[u].IsFinished()) {
@@ -552,13 +617,16 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
                 swap(units[u], units.back());
                 units.pop_back();
             } else {
+                // Remember where the units were to remove from the grid
+                units[u].SetPreviousCoords(units[u].GetCoords());
+
                 // Move those that didn't finish.
-                units[u].Move();
+                units[u].Move(grid);
             }
         }
 
-        // Print the frame
-        PrintGridWithUnits(grid, units, navGrid);
+        ShowNextFrame(grid, units, navGrid, hConsole);
+        std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 
     // deallocate and fill grid
