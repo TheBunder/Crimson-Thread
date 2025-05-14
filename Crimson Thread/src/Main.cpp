@@ -21,7 +21,7 @@ void FillImportantPoints(Point *importantPoints, HostageStation **HostageStation
 
 int main() {
     // prep
-    system("CLS");
+    system("CLS"); // Clear console
     auto startProgram = std::chrono::high_resolution_clock::now();
     EnableAnsiEscapeCodes(); // Used to enable
 	srand(time(0)); // seed random number generator.
@@ -35,7 +35,7 @@ int main() {
     map<PathKey, vector<Point> > pathsBetweenStations;
 
     // Generate maze and hostages (in the future, maybe units)
-    Point unitsEntrance = Generate(grid, HostageStations); // <---------------------------------------
+    Point unitsEntrance = Generate(grid, HostageStations);
 
     // Array that holds the points to all hostage station and the unit starting point.
     Point *importantPoints = new Point[numOfSections + 1];

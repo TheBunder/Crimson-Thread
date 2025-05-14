@@ -446,13 +446,11 @@ void PrintGridWithPath(char **grid, char **navGrid) {
         printf("%02d ", y % 100); // Print Y coordinate (mod 100)
 
         for (int x = 0; x < GRID_WIDTH; x++) {
-
             if (navGrid[x][y] == -1) {
                 // Mark finished path by changing BG color
                 FinishedPathColor();
                 fBGChanged = true;
-            }
-            else if (navGrid[x][y] > 0) {
+            } else if (navGrid[x][y] > 0) {
                 // Mark path by changing BG color
                 PathColor();
                 fBGChanged = true;
@@ -485,7 +483,7 @@ void PrintGridWithPath(char **grid, char **navGrid) {
 }
 
 void MarkPath(vector<Unit> units, char **navGrid) {
-    for (Unit unit : units){
+    for (Unit unit: units) {
         queue<Point> q = unit.GetPath();
         while (!q.empty()) {
             navGrid[q.front().x][q.front().y]++;
@@ -496,7 +494,7 @@ void MarkPath(vector<Unit> units, char **navGrid) {
 
 void PrintGridWithUnits(char **grid, vector<Unit> units, char **navGrid) {
     // Add units
-    for (Unit unit : units){
+    for (Unit unit: units) {
         grid[unit.GetX()][unit.GetY()] = UNIT;
     }
 
@@ -504,16 +502,17 @@ void PrintGridWithUnits(char **grid, vector<Unit> units, char **navGrid) {
     PrintGridWithPath(grid, navGrid);
 
     // Remove units and their path mark
-    for (Unit unit : units){
+    for (Unit unit: units) {
         grid[unit.GetX()][unit.GetY()] = PATH;
-        if (--navGrid[unit.GetX()][unit.GetY()] == 0) { // If no more units will wolk there mark as empty
+        if (--navGrid[unit.GetX()][unit.GetY()] == 0) {
+            // If no more units will wolk there mark as empty
             navGrid[unit.GetX()][unit.GetY()] = -1;
         }
     }
 }
 
-void CreatUnits(vector<Unit> &units, int numOfUnits, Point unitsEntrance, vector<vector<LocationID>> &OperationOrder,
-                   map<PathKey, vector<Point> > &pathsBetweenStations) {
+void CreatUnits(vector<Unit> &units, int numOfUnits, Point unitsEntrance, vector<vector<LocationID> > &OperationOrder,
+                map<PathKey, vector<Point> > &pathsBetweenStations) {
     for (int i = 0; i < numOfUnits; i++) {
         units.emplace_back(unitsEntrance, OperationOrder[i], pathsBetweenStations);
     }
@@ -529,7 +528,7 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
     CreatUnits(units, numOfUnits, unitsEntrance, OperationOrder, pathsBetweenStations);
 
     // Allocate and fill grid
-    char** navGrid = AllocateGrid();
+    char **navGrid = AllocateGrid();
 
     // Set default navigation grid
     for (int i = 0; i < GRID_WIDTH; ++i) {
@@ -542,22 +541,21 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
     MarkPath(units, navGrid);
 
     while (!units.empty()) {
+        // Move to a good location to print the simulation
+        COORD coord = {0, 5};
+        SetConsoleCursorPosition(hConsole, coord);
+
         // Move all units and remove those that finished their operation.
-        for (int u = units.size()-1; u >= 0; --u) {
+        for (int u = units.size() - 1; u >= 0; --u) {
             if (units[u].IsFinished()) {
                 // Remove the station using swap and pop.
                 swap(units[u], units.back());
                 units.pop_back();
-            }
-            else {
+            } else {
                 // Move those that didn't finish.
                 units[u].Move();
             }
         }
-
-        // Reset the pointer of the print to print of the previews "frame" to cause animation effect.
-        COORD coord = { 0, 5 };
-        SetConsoleCursorPosition(hConsole, coord);
 
         // Print the frame
         PrintGridWithUnits(grid, units, navGrid);
