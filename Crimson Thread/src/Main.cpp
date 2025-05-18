@@ -11,6 +11,7 @@
 #include "include/BFS.h"
 #include "include/ThreadPool.h"
 #include "include/GeneticAlgorithm.h"
+#include "include/ConsoleManager.h"
 
 //----FUNCTION PROTOTYPES---------------------------------------------
 bool EnableAnsiEscapeCodes();
@@ -23,8 +24,10 @@ int main() {
     // prep
     system("CLS"); // Clear console
     auto startProgram = std::chrono::high_resolution_clock::now();
-    EnableAnsiEscapeCodes(); // Used to enable
 	srand(time(0)); // seed random number generator.
+
+    // Set the console on a separate thread
+    thread consoleThread(SetConsole);
 
     // variables
     char **grid = AllocateGrid();
@@ -76,6 +79,9 @@ int main() {
     // Print total Pvalue
     printf("Total PValue for the mission: %.2f\n", SumPValue(answer, HostageStations));
 
+    // Wait for the console thread to finish
+    consoleThread.join();
+
     // Show the best operation found
     ShowOperation(grid, numOfUnits, unitsEntrance, answer, pathsBetweenStations);
 
@@ -91,41 +97,6 @@ int main() {
 }
 
 //----FUNCTIONS-------------------------------------------------------
-
-//  Enables ANSI escape code processing on Windows console.
-// Returns true if successful, false otherwise.
-bool EnableAnsiEscapeCodes() {
-    // Get a handle to the standard output device (the console)
-    HANDLE stdOutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (stdOutputHandle == INVALID_HANDLE_VALUE) {
-        fprintf(stderr, "Error getting standard output handle.\n");
-        return false;
-    }
-
-    // Get the current console mode flags
-    DWORD consoleMode = 0;
-    if (!GetConsoleMode(stdOutputHandle, &consoleMode)) {
-        fprintf(stderr, "Error getting console mode.\n");
-        return false;
-    }
-
-    // Check if ANSI processing is already enabled
-    if (consoleMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) {
-        // Already enabled, nothing to do
-        return true;
-    }
-
-    // Set the ENABLE_VIRTUAL_TERMINAL_PROCESSING flag
-    consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
-    // Set the new console mode
-    if (!SetConsoleMode(stdOutputHandle, consoleMode)) {
-        fprintf(stderr, "Error setting console mode. This may require Windows 10 or newer.\n");
-        return false;
-    }
-
-    return true;
-}
 
 // Function to populate an array with the coordinates of important points,
 // including the units' starting position and all hostage stations.
