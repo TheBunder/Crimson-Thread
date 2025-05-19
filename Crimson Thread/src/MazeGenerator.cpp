@@ -340,6 +340,11 @@ void FinishedPathColor() {
     printf("\033[48;5;57m");
 }
 
+void NextStationColor() {
+    // Color name: Gold3  - 178
+    printf("\033[48;5;178m");
+}
+
 void ResetBG() {
     // Reset BG back to black
     printf("\033[48;5;0m");
@@ -440,9 +445,13 @@ void PrintGridWithPath(char **grid, char **navGrid) {
         printf("%02d ", y % 100); // Print Y coordinate (mod 100)
 
         for (int x = 0; x < GRID_WIDTH; x++) {
-            if (navGrid[x][y] <= -1) {
+            if (navGrid[x][y] == -1) {
                 // Mark finished path by changing BG color
                 FinishedPathColor();
+                fBGChanged = true;
+            } else if (navGrid[x][y] <= -2) {
+                // Mark The next station the unit will go to
+                NextStationColor();
                 fBGChanged = true;
             } else if (navGrid[x][y] > 0) {
                 // Mark path by changing BG color
@@ -478,9 +487,12 @@ void PrintGridWithPath(char **grid, char **navGrid) {
 
 void PrintCharInGrid(int x, int y, char **navGrid, char c) {
     // Set background color
-    if (navGrid[x][y] <= -1) {
+    if (navGrid[x][y] == -1) {
         // Mark finished path by changing BG color
         FinishedPathColor();
+    } else if (navGrid[x][y] <= -2) {
+        // Mark The next station the unit will go to
+        NextStationColor();
     } else if (navGrid[x][y] > 0) {
         // Mark path by changing BG color
         PathColor();
@@ -511,23 +523,11 @@ void MarkPath(vector<Unit> units, char **navGrid) {
             q.pop();
         }
     }
-}
 
-void PrintGridWithUnits(char **grid, vector<Unit> units, char **navGrid) {
-    // // Add units
-    // for (Unit unit: units) {
-    //     grid[unit.GetX()][unit.GetY()] = UNIT;
-    // }
-
-    // Print
-    PrintGridWithPath(grid, navGrid);
-
-    // Remove units and their path mark
-    for (Unit unit: units) {
-        if (--navGrid[unit.GetX()][unit.GetY()] == 0) {
-            // If no more units will wolk there mark as finished
-            navGrid[unit.GetX()][unit.GetY()] = -1;
-        }
+    // Mark each unit first objective
+    for (Unit unit : units) {
+        Point unitFirstStation = unit.GetNextStationCoords();
+        navGrid[unitFirstStation.x][unitFirstStation.y] = -2;
     }
 }
 
@@ -575,6 +575,17 @@ void CreatUnits(vector<Unit> &units, int numOfUnits, Point unitsEntrance, vector
     }
 }
 
+void MarkNextStation(char **grid, HANDLE hConsole, Point newStationLocation, char **navGrid) {
+    navGrid[newStationLocation.x][newStationLocation.y] = -2; // Mark on the navGrid
+
+    // Mark on the screen
+    COORD coord = {(short)(newStationLocation.x+3), (short)(GRID_HEIGHT-newStationLocation.y-1)};
+    SetConsoleCursorPosition(hConsole, coord);
+
+    // Print the station
+    PrintCharInGrid(newStationLocation.x, newStationLocation.y, navGrid, HOSTAGES);
+}
+
 void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vector<LocationID> > &OperationOrder,
                    map<PathKey, vector<Point> > &pathsBetweenStations) {
     // Get console handle
@@ -602,7 +613,7 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
     SetConsoleCursorPosition(hConsole, coord);
 
     // Print the very first frame
-    PrintGridWithUnits(grid, units, navGrid);
+    PrintGridWithPath(grid, navGrid);
 
     while (!units.empty()) {
         // Move all units and remove those that finished their operation.
@@ -613,7 +624,10 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
                 units.pop_back();
             } else {
                 // Move those that didn't finish.
-                units[u].Move(grid);
+                bool markNewStation = units[u].Move(grid);
+                if (markNewStation) {
+                    MarkNextStation(grid, hConsole, units[u].GetNextStationCoords(), navGrid);
+                }
             }
         }
 

@@ -1,8 +1,5 @@
 #include <utility>
 #include "../include/Unit.h"
-
-#include <iostream>
-
 #include "../include/Utils.h"
 
 void Unit::SetPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations) {
@@ -81,7 +78,9 @@ void Unit::SetCoords(Point newPos) {
     coords = newPos;
 }
 
-void Unit::Move(char** grid) {
+bool Unit::Move(char** grid) {
+    bool goingToNewStation = false;
+
     // Remember where the unit was to remove from the grid
     SetPreviousCoords(GetCoords());
 
@@ -95,12 +94,15 @@ void Unit::Move(char** grid) {
         else {
             SetStandOn(PATH);
             stationsCoords.pop();
+            goingToNewStation = !stationsCoords.empty();
         }
         SetCoords(newPos);
         path.pop();
     } else {
         finishedMission = true;
     }
+
+    return goingToNewStation;
 }
 
 bool Unit::IsFinished() const {
@@ -125,4 +127,13 @@ void Unit::SetPreviousCoords(Point previous_coords) {
 }
 void Unit::SetPreviousCoords(int x, int y) {
     previousCoords = Point(x, y);
+}
+
+Point Unit::GetNextStationCoords() const {
+    if (!stationsCoords.empty()) {
+        return stationsCoords.front();
+    }
+
+    // If there is not next point then return a default value
+    return {-1,-1};
 }

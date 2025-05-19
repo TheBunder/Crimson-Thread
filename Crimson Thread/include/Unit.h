@@ -29,7 +29,7 @@ public:
 
     void SetCoords(Point newPos);
 
-    void Move(char **grid);
+    bool Move(char **grid);
 
     bool IsFinished() const;
 
@@ -41,5 +41,7 @@ public:
 
     void SetPreviousCoords(Point previous_coords);
     void SetPreviousCoords(int x, int y);
+
+    Point GetNextStationCoords() const;
 };
 #endif // UNIT_H
