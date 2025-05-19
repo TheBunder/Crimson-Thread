@@ -6,14 +6,16 @@
 class Unit {
 private:
     Point coords; // To hold x and y coordinates
-    queue<Point> path{};
+    queue<Point> path{}; // The path the unit will take
+    queue<Point> stationsCoords{}; // The location of each of the stations the unit will save
     bool finishedMission = false;
-    char standOn;
+    char standOn[2];
     Point previousCoords;
 
-public:
+    void SetStationsCoords(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations);
     void SetPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations);
 
+public:
     queue<Point> GetPath();
 
     Unit(Point entrance, vector<LocationID> &OperationOrder,
@@ -31,13 +33,13 @@ public:
 
     bool IsFinished() const;
 
-    char GetStandOn() const;
+    char GetStoodOn() const;
 
-    void SetStandOn(char stand_on);
+    void SetStandOn(char standOn_);
 
     Point GetPreviousCoords() const;
 
-    void SetPreviousCoords(const Point &previous_coords);
+    void SetPreviousCoords(Point previous_coords);
     void SetPreviousCoords(int x, int y);
 };
 #endif // UNIT_H

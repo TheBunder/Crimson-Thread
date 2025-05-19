@@ -19,7 +19,8 @@ void DeallocateHostageStations(HostageStation **HostageStations, int numOfSectio
 void printHostageStationInfo(HostageStation **HostageStations, int numOfSections);
 void FillImportantPoints(Point *importantPoints, HostageStation **HostageStations, int numberStations,
                          Point unitsStartingPosition);
-
+void ShowPlan(vector<vector<LocationID>> plan, HostageStation **HostageStations); // Show the plan the units will fallow
+void ExplainSigns(); // Explain the various marks and signs in the simulation
 int main() {
     // prep
     system("CLS"); // Clear console
@@ -65,7 +66,7 @@ int main() {
     // End Path finding time and print it
     auto endPathFinding = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_iteration = endPathFinding - startProgram;
-    printf("Path finding execution time: %fl seconds\n", elapsed_iteration.count());
+    printf("Simulation environment creation & Path finding execution time: %f seconds\n", elapsed_iteration.count());
 
     // Main algorithm
     auto startGA = std::chrono::high_resolution_clock::now();
@@ -74,26 +75,31 @@ int main() {
     // Print GA running execution time
     auto endGA = std::chrono::high_resolution_clock::now();
     elapsed_iteration = endGA - startGA;
-    printf("\nGenetic algorithm execution time: %fl seconds\n", elapsed_iteration.count());
+    printf("\nGenetic algorithm execution time: %f seconds\n", elapsed_iteration.count());
 
-    // Print total Pvalue
+    // Print total PValue
     printf("Total PValue for the mission: %.2f\n", SumPValue(answer, HostageStations));
 
     // Wait for the console thread to finish
     consoleThread.join();
 
     // Show the best operation found
+    printf("\n\nBest plan found: \n");
+    ShowPlan(answer, HostageStations);
+
+    // Explaining the visualization
+    system("CLS"); // Clear console
+    ExplainSigns();
+
+    // Visualize operation found
+    system("CLS"); // Clear console
     ShowOperation(grid, numOfUnits, unitsEntrance, answer, pathsBetweenStations);
+    getchar();
 
     // Deallocate space
     DeallocateGrid(grid);
     DeallocateHostageStations(HostageStations, numOfSections);
     delete[] importantPoints;
-
-    // Print running time
-    endPathFinding = std::chrono::high_resolution_clock::now();
-    elapsed_iteration = endPathFinding - startProgram;
-    printf("\nTotal execution time: %fl seconds", elapsed_iteration.count());
 }
 
 //----FUNCTIONS-------------------------------------------------------
@@ -110,6 +116,54 @@ void FillImportantPoints(Point *importantPoints, HostageStation **HostageStation
         // Stor the station location
         importantPoints[i] = HostageStations[i - 1]->GetCoords();
     }
+}
+
+void ShowPlan(vector<vector<LocationID>> plan, HostageStation **HostageStations) {
+    for (int u = 0; u < plan.size(); ++u) {
+        UnitColor();
+        printf("------Unit number #%d plan:------\n", u);
+        if (plan[u].size() == 1) {
+            ResetFG();
+            printf("No stations assigned\n");
+        }
+        else {
+            // Print info about each of the stations
+            HostagesColor();
+            for (int s = 1; s < plan[u].size(); ++s) {
+                HostageStations[plan[u][s]-1]->PrintInfo();
+            }
+        }
+    }
+
+    ResetFG();
+
+    printf("\nTo continue to the visualization proses, please press any button");
+    getchar();
+}
+
+void ExplainSigns() {
+    printf("Before we start visualizing the simulation, here are all the marks and signs you need to know: \n\n");
+
+    // Explain signs
+    UnitColor();
+    printf("The Units will be represented using this ASCII sign: %c and in this very color.\n", UNIT);
+    HostagesColor();
+    printf("The Hostage Stations will be represented using this ASCII sign: %c and in this very color.\n", HOSTAGES);
+
+    ResetFG();
+
+    // Explain marks
+    printf("\nThe path the unit will take will be marked by this color: ");
+    PathColor();
+    printf("              \n");
+    ResetBG();
+    printf("The path that the unit toke and will no longer go over will be marked by this color: ");
+    FinishedPathColor();
+    printf("              \n");
+    ResetBG();
+
+    printf("\nPlease press any key to start the visualization of the best plan the genetic algorithm found\n");
+    getchar();
 }
 
 // Deallocate the memory used by an array of HostageStation objects

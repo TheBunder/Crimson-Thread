@@ -330,11 +330,6 @@ void ResetFG() {
     printf("\033[0m");
 }
 
-void SearchedColor() {
-    // Color name: PaleTurquoise1 - 159
-    printf("\033[48;5;159m");
-}
-
 void PathColor() {
     // Color name: DeepSkyBlue1 - 39
     printf("\033[48;5;39m");
@@ -344,7 +339,6 @@ void FinishedPathColor() {
     // Color name: BlueViolet  - 57
     printf("\033[48;5;57m");
 }
-
 
 void ResetBG() {
     // Reset BG back to black
@@ -446,7 +440,7 @@ void PrintGridWithPath(char **grid, char **navGrid) {
         printf("%02d ", y % 100); // Print Y coordinate (mod 100)
 
         for (int x = 0; x < GRID_WIDTH; x++) {
-            if (navGrid[x][y] == -1) {
+            if (navGrid[x][y] <= -1) {
                 // Mark finished path by changing BG color
                 FinishedPathColor();
                 fBGChanged = true;
@@ -471,7 +465,7 @@ void PrintGridWithPath(char **grid, char **navGrid) {
             }
             if (fBGChanged) {
                 ResetBG();
-                fBGChanged = false; // make zero
+                fBGChanged = false;
             }
         }
 
@@ -484,7 +478,7 @@ void PrintGridWithPath(char **grid, char **navGrid) {
 
 void PrintCharInGrid(int x, int y, char **navGrid, char c) {
     // Set background color
-    if (navGrid[x][y] == -1) {
+    if (navGrid[x][y] <= -1) {
         // Mark finished path by changing BG color
         FinishedPathColor();
     } else if (navGrid[x][y] > 0) {
@@ -520,19 +514,18 @@ void MarkPath(vector<Unit> units, char **navGrid) {
 }
 
 void PrintGridWithUnits(char **grid, vector<Unit> units, char **navGrid) {
-    // Add units
-    for (Unit unit: units) {
-        grid[unit.GetX()][unit.GetY()] = UNIT;
-    }
+    // // Add units
+    // for (Unit unit: units) {
+    //     grid[unit.GetX()][unit.GetY()] = UNIT;
+    // }
 
     // Print
     PrintGridWithPath(grid, navGrid);
 
     // Remove units and their path mark
     for (Unit unit: units) {
-        grid[unit.GetX()][unit.GetY()] = PATH;
         if (--navGrid[unit.GetX()][unit.GetY()] == 0) {
-            // If no more units will wolk there mark as empty
+            // If no more units will wolk there mark as finished
             navGrid[unit.GetX()][unit.GetY()] = -1;
         }
     }
@@ -564,12 +557,14 @@ void ShowNextFrame(char **grid, vector<Unit> units, char **navGrid, HANDLE hCons
         COORD coord = {(short)(unitX+3), (short)(GRID_HEIGHT-unitY-1)};
         SetConsoleCursorPosition(hConsole, coord);
 
-        // Print the unit
-        PrintCharInGrid(unitX, unitY, navGrid, PATH);
         if (--navGrid[unit.GetX()][unit.GetY()] == 0) {
             // If no more units will wolk there mark as empty
             navGrid[unit.GetX()][unit.GetY()] = -1;
         }
+
+        // Print the item under the unit and update the grid
+        PrintCharInGrid(unitX, unitY, navGrid, unit.GetStoodOn());
+        grid[unitX][unitY] = unit.GetStoodOn();
     }
 }
 
@@ -606,7 +601,7 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
     COORD coord = {0, 0};
     SetConsoleCursorPosition(hConsole, coord);
 
-    // Print the frame
+    // Print the very first frame
     PrintGridWithUnits(grid, units, navGrid);
 
     while (!units.empty()) {
@@ -617,9 +612,6 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
                 swap(units[u], units.back());
                 units.pop_back();
             } else {
-                // Remember where the units were to remove from the grid
-                units[u].SetPreviousCoords(units[u].GetCoords());
-
                 // Move those that didn't finish.
                 units[u].Move(grid);
             }
@@ -629,6 +621,10 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
         std::this_thread::sleep_for(std::chrono::milliseconds(250));
     }
 
-    // deallocate and fill grid
+    // Move the pointer to the bottom of the grid
+    coord = {0, GRID_HEIGHT};
+    SetConsoleCursorPosition(hConsole, coord);
+
+    // Deallocate grid
     DeallocateGrid(navGrid);
 }

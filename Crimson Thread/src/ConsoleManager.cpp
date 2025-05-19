@@ -181,7 +181,7 @@ void SetConsole() {
     const int maxAttempts = 100; // Prevent infinite loops
     const std::chrono::milliseconds sleepDuration(50); // Time to wait between zoom steps
 
-    printf("Attempting to adjust console height to fit the grid.",targetHeight);
+    printf("Attempting to adjust console height to fit the grid.\n",targetHeight);
 
     int currentHeight = GetConsoleWindowHeight();
     int attempts = 0;
@@ -204,5 +204,7 @@ void SetConsole() {
         currentHeight = GetConsoleWindowHeight();
         attempts++;
     }
+
+    printf("Adjustment completed.\n");
 }
 
