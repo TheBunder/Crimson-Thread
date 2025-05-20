@@ -1,5 +1,5 @@
-﻿#ifndef MAZE_BASICS
-#define MAZE_BASICS
+﻿#ifndef UTILS
+#define UTILS
 //----INCLUDES-------------------------------------------------------
 #include <array>
 #include <vector>
@@ -91,9 +91,9 @@ typedef struct Point {
 } Point;
 
 //----FUNCTION DECLARATIONS------------------------------------------
-char** AllocateGrid();
-void DeallocateGrid(char** grid);
-int IsInArrayBounds(int x, int y);
+char** AllocateGrid(); // Allocate the grid used for the simulation
+void DeallocateGrid(char** grid); // Deallocate the grid used for the simulation
+int IsInArrayBounds(int x, int y); // Check if the x and y points are in the array
 PathKey MakeKey(LocationID id1, LocationID id2); // Function to ensure consistent key ordering
 
-#endif
+#endif // UTILS

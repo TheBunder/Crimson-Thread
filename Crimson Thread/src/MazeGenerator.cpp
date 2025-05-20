@@ -31,13 +31,11 @@ constexpr unsigned char WallTypeByPattern[16] = {
 
 //----FUNCTION PROTOTYPES---------------------------------------------
 void ResetGrid(char **grid); //Fill the array with the WALL sign
-int IsInArrayBounds(int x, int y); // Check if the x and y points are in the array
 void Visit(int x, int y, char **grid); // Move in the array and make a path (The main method to creat the maze)
 void BreakWalls(char **grid); // After the maze was made, it breaks additional paths
 void RedoWalls(char **grid); // Convert the walls from the default version to a better looking tiles
 void InsertHostages(char **grid,
                     HostageStation **HostageStations); // Add people (Hostages and\or kidnappers) to the maze
-void PrintGrid(char **grid); // Print the array
 Point InsertUnitEntrance(char **grid); // Find a good position for the units to start.
 
 //----FUNCTIONS-------------------------------------------------------
@@ -166,57 +164,87 @@ void BreakWalls(char **grid) {
     }
 }
 
-void InsertHostages(char **grid, HostageStation **HostageStations) {
-    // Calculate the total number of sections based on grid size and subgrid size.
-    int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
-    // Flag to track if a station was successfully placed in the current section.
-    bool placed;
-    // Variables for initial random position within a subgrid.
-    int x, y;
-    // Variables for checking neighboring positions.
-    int newX, newY;
+// Try to place hostage station at random position or its 8 neighbors
+bool TryPlaceAtRandomPosition(char **grid, int leftBound, int bottomBound, int* finalX, int* finalY) {
+    // Generate random position within subgrid
+    int randomX = leftBound + rand() % SUBGRID_SIZE;
+    int randomY = bottomBound + rand() % SUBGRID_SIZE;
 
-    // Arrays to define relative coordinates for checking 8 neighbors + the center (9 total).
-    int dx[] = {0, -1, -1, -1, 0, 0, 1, 1, 1};
-    int dy[] = {0, -1, 0, 1, -1, 1, -1, 0, 1};
+    // Check center position + 8 surrounding neighbors
+    int offsetX[] = {0, -1, -1, -1, 0, 0, 1, 1, 1};
+    int offsetY[] = {0, -1, 0, 1, -1, 1, -1, 0, 1};
 
-    for (int i = 0; i < numOfSections; i++) {
-        // Reset the placed flag for the new section.
-        placed = false;
+    for (int i = 0; i < 9; i++) {
+        int candidateX = randomX + offsetX[i];
+        int candidateY = randomY + offsetY[i];
 
-        // Calculate subgrid coordinates
-        int subgrid_x = i % (GRID_WIDTH / SUBGRID_SIZE);
-        int subgrid_y = i / (GRID_WIDTH / SUBGRID_SIZE);
+        if (IsInMaze(candidateX, candidateY) && grid[candidateX][candidateY] == PATH) {
+            grid[candidateX][candidateY] = HOSTAGES;
+            *finalX = candidateX;
+            *finalY = candidateY;
+            return true;
+        }
+    }
 
-        // Generate a random position within the subgrid
-        x = subgrid_x * SUBGRID_SIZE + rand() % SUBGRID_SIZE;
-        y = subgrid_y * SUBGRID_SIZE + rand() % SUBGRID_SIZE;
+    // Store the random position for modular search starting point
+    *finalX = randomX;
+    *finalY = randomY;
+    return false;
+}
 
+// Search entire subgrid using modular approach starting from given position
+bool SearchSubgridModular(char **grid, int leftBound, int bottomBound, int startX, int startY, int* finalX, int* finalY) {
+    int startOffsetX = startX - leftBound;
+    int startOffsetY = startY - bottomBound;
 
-        // Check if the potential position is within the maze bounds AND if it's a valid path cell.
-        for (int j = 0; j < 9 && !placed; j++) {
-            newX = x + dx[j];
-            newY = y + dy[j];
+    for (int rowOffset = 0; rowOffset < SUBGRID_SIZE; rowOffset++) {
+        for (int colOffset = 0; colOffset < SUBGRID_SIZE; colOffset++) {
+            // Calculate new positions using modulo
+            int candidateX = leftBound + ((startOffsetX + colOffset) % SUBGRID_SIZE);
+            int candidateY = bottomBound + ((startOffsetY + rowOffset) % SUBGRID_SIZE);
 
-            if (IsInMaze(newX, newY) && grid[newX][newY] == PATH) {
-                // If valid and a path, place the HOSTAGES character on the grid.
-                grid[newX][newY] = HOSTAGES;
-                placed = true;
-                x = newX;
-                y = newY;
+            if (IsInMaze(candidateX, candidateY) && grid[candidateX][candidateY] == PATH) {
+                grid[candidateX][candidateY] = HOSTAGES;
+                *finalX = candidateX;
+                *finalY = candidateY;
+                return true;
             }
         }
+    }
 
-        // Create a new HostageStation object and store it in the array
+    // There is not a single PATH in the entire subgird.
+    return false;
+}
+
+void InsertHostages(char **grid, HostageStation **HostageStations) {
+    int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
+
+    for (int sectionIndex = 0; sectionIndex < numOfSections; sectionIndex++) {
+        // Calculate subgrid boundaries
+        int subgridCol = sectionIndex % (GRID_WIDTH / SUBGRID_SIZE);
+        int subgridRow = sectionIndex / (GRID_WIDTH / SUBGRID_SIZE);
+        int leftBound = subgridCol * SUBGRID_SIZE;
+        int bottomBound = subgridRow * SUBGRID_SIZE;
+
+        int finalX = -1, finalY = -1;
+        bool placed = false;
+
+        // First try: Insert to a random position or to it's 8 surrounding neighbors.
+        placed = TryPlaceAtRandomPosition(grid, leftBound, bottomBound, &finalX, &finalY);
+
+        // Second attempt: Search entire subgrid modularly if first attempt didn't find a place.
+        if (!placed) {
+            placed = SearchSubgridModular(grid, leftBound, bottomBound, finalX, finalY, &finalX, &finalY);
+        }
+
+        // Create HostageStation
         if (placed) {
-            // If successfully placed, create the object with the placed coordinates and random attributes.
-            HostageStations[i] = new HostageStation(x, y, i, (double) (rand() % 101) / 100,
-                                                    rand() % 10 + 1, (double) (rand() % 71) / 100,
-                                                    (double) (rand() % 41) / 100);
+            HostageStations[sectionIndex] = new HostageStation(finalX, finalY, sectionIndex, (double)(rand() % 101) / 100,
+                                                    rand() % 10 + 1, (double)(rand() % 71) / 100,
+                                                    (double)(rand() % 41) / 100);
         } else {
-            // If not placed (no valid spot found in the section/neighbors),
-            // create a dummy HostageStation with invalid coordinates (-1, -1) and default values.
-            HostageStations[i] = new HostageStation(-1, -1, i, 0.0, 0, 0.0, 0.0); // if not placed put -1,-1
+            // This subgrid has no PATH cells at all
+            HostageStations[sectionIndex] = new HostageStation(-1, -1, sectionIndex, 0.0, 0, 0.0, 0.0);
         }
     }
 }

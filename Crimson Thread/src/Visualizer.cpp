@@ -1,10 +1,11 @@
+//----INCLUDES--------------------------------------------------------
 #include <windows.h>
 #include <iostream>
 #include "include/Visualizer.h"
-#include "include/HostageStation.h"
 #include "include/Unit.h"
 
-// All colors that are used are from the 256-color color table
+//----FUNCTIONS-------------------------------------------------------
+// All colors that are used are from the 256-color table
 void HostagesColor() {
     // Color name: OrangeRed1 - 202
     printf("\033[38;5;202m");

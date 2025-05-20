@@ -5,7 +5,6 @@
 #include <iostream>
 #include <windows.h>
 #include <chrono>
-#include <map>
 #include "include/MazeGenerator.h"
 #include "include/HostageStation.h"
 #include "include/BFS.h"
@@ -22,6 +21,8 @@ void FillImportantPoints(Point *importantPoints, HostageStation **HostageStation
                          Point unitsStartingPosition);
 void ShowPlan(vector<vector<LocationID>> plan, HostageStation **HostageStations); // Show the plan the units will fallow
 void ExplainSigns(); // Explain the various marks and signs in the simulation
+
+//----FUNCTIONS-------------------------------------------------------
 int main() {
     // prep
     system("CLS"); // Clear console
@@ -103,8 +104,6 @@ int main() {
     delete[] importantPoints;
 }
 
-//----FUNCTIONS-------------------------------------------------------
-
 // Function to populate an array with the coordinates of important points,
 // including the units' starting position and all hostage stations.
 void FillImportantPoints(Point *importantPoints, HostageStation **HostageStations, int numberStations,
@@ -119,7 +118,7 @@ void FillImportantPoints(Point *importantPoints, HostageStation **HostageStation
     }
 }
 
-void ShowPlan(vector<vector<LocationID>> plan, HostageStation **HostageStations) {
+void ShowPlan(const vector<vector<LocationID>> plan, HostageStation **HostageStations) {
     for (int u = 0; u < plan.size(); ++u) {
         UnitColor();
         printf("------Unit number #%d plan:------\n", u);
