@@ -17,7 +17,7 @@ using std::map;
 using std::pair;
 using std::queue;
 
-// Key: Pair of IDs (Station/Start Point). Ensure consistent ordering (e.g., smaller ID first).
+// Key: A pair of IDs (Station/Start Point). Ensure consistent ordering (e.g., smaller ID first).
 // Special ID for start points (units IDs are index*-1 ; station ID are index+1)
 using LocationID = int;
 using PathKey = pair<LocationID, LocationID>;

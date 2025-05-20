@@ -1,8 +1,6 @@
 #ifndef HOSTAGESTATION_H
 #define HOSTAGESTATION_H
 
-#include<array>
-#include <stdio.h>
 #include "Utils.h"
 
 class HostageStation {

@@ -12,6 +12,7 @@
 #include "include/ThreadPool.h"
 #include "include/GeneticAlgorithm.h"
 #include "include/ConsoleManager.h"
+#include "include/Visualizer.h"
 
 //----FUNCTION PROTOTYPES---------------------------------------------
 bool EnableAnsiEscapeCodes();

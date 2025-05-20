@@ -1,4 +1,5 @@
-#include "../include/HostageStation.h"
+#include <stdio.h>
+#include "include/HostageStation.h"
 
 HostageStation::HostageStation(int x, int y, int subgrid, double hostageChance, int numHostages,
                                double kidnapperChance, double soldierLossChance) : subgridAffiliation(subgrid),

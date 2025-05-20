@@ -114,6 +114,7 @@ char Unit::GetStoodOn() const {
 }
 
 void Unit::SetStandOn(char standOn_) {
+    // Put the current char the unit stand on as the previews.
     standOn[1] = standOn[0];
     standOn[0] = standOn_;
 }
@@ -125,15 +126,18 @@ Point Unit::GetPreviousCoords() const {
 void Unit::SetPreviousCoords(Point previous_coords) {
     previousCoords = previous_coords;
 }
+
 void Unit::SetPreviousCoords(int x, int y) {
     previousCoords = Point(x, y);
 }
 
 Point Unit::GetNextStationCoords() const {
+    // Check if the unit didn't finish their task.
     if (!stationsCoords.empty()) {
+        // Return the unit next objective.
         return stationsCoords.front();
     }
 
-    // If there is not next point then return a default value
+    // If there is no next point, return a default value.
     return {-1,-1};
 }

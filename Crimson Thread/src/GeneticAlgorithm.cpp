@@ -559,6 +559,8 @@ bool Mutate(Chromosome *chromosome, int numOfUnits, int numOfHostageStations,
             return SwapStationFromRandomUnitPath(chromosome, numOfUnits, pathsBetweenStations);
         case 3:
             return SwapStationBetweenRandomUnitsPath(chromosome, numOfUnits, pathsBetweenStations);
+        default:
+            return false;
     }
 }
 
