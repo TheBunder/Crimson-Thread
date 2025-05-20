@@ -67,7 +67,6 @@ Unit::Unit(Point entrance, vector<LocationID> &OperationOrder,
            map<PathKey, vector<Point> > &pathsBetweenStations): coords(entrance) {
     SetPath(OperationOrder, pathsBetweenStations);
     SetStationsCoords(OperationOrder, pathsBetweenStations);
-    SetStandOn('E');
 }
 
 int Unit::GetX() const { return coords.x; }
@@ -88,11 +87,8 @@ bool Unit::Move(char** grid) {
     if (!path.empty()) {
         // Update the location of the unit
         Point newPos = path.front();
-        if (newPos != stationsCoords.front()) {
-            SetStandOn(grid[newPos.x][newPos.y]);
-        }
-        else {
-            SetStandOn(PATH);
+        if (newPos == stationsCoords.front()) {
+            grid[newPos.x][newPos.y] = PATH;
             stationsCoords.pop();
             goingToNewStation = !stationsCoords.empty();
         }
@@ -107,16 +103,6 @@ bool Unit::Move(char** grid) {
 
 bool Unit::IsFinished() const {
     return finishedMission;
-}
-
-char Unit::GetStoodOn() const {
-    return standOn[1];
-}
-
-void Unit::SetStandOn(char standOn_) {
-    // Put the current char the unit stand on as the previews.
-    standOn[1] = standOn[0];
-    standOn[0] = standOn_;
 }
 
 Point Unit::GetPreviousCoords() const {

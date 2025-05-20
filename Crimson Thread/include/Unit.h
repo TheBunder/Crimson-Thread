@@ -9,7 +9,6 @@ private:
     queue<Point> path{}; // The path the unit will take
     queue<Point> stationsCoords{}; // The location of each of the stations the unit will save
     bool finishedMission = false;
-    char standOn[2];
     Point previousCoords;
 
     void SetStationsCoords(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations);
@@ -32,10 +31,6 @@ public:
     bool Move(char **grid);
 
     bool IsFinished() const;
-
-    char GetStoodOn() const;
-
-    void SetStandOn(char standOn_);
 
     Point GetPreviousCoords() const;
 

@@ -254,8 +254,7 @@ void ShowNextFrame(char **grid, vector<Unit> units, char **navGrid, HANDLE hCons
         }
 
         // Print the item under the unit and update the grid
-        PrintCharInGrid(unitX, unitY, navGrid, unit.GetStoodOn());
-        grid[unitX][unitY] = unit.GetStoodOn();
+        PrintCharInGrid(unitX, unitY, navGrid, grid[unitX][unitY]);
     }
 }
 

@@ -244,7 +244,8 @@ void InsertHostages(char **grid, HostageStation **HostageStations) {
                                                     (double)(rand() % 41) / 100);
         } else {
             // This subgrid has no PATH cells at all
-            HostageStations[sectionIndex] = new HostageStation(-1, -1, sectionIndex, 0.0, 0, 0.0, 0.0);
+            HostageStations[sectionIndex] = new HostageStation(-1, -1, sectionIndex, 0.0,
+                                                                    0, 0.0, 0.0);
         }
     }
 }
