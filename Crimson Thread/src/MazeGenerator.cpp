@@ -1,13 +1,13 @@
 ﻿//----INCLUDES--------------------------------------------------------
 #include <algorithm>
+#include <stack>
 #include "include/MazeGenerator.h"
 #include "include/Unit.h"
 
 //----CONSTANTS-------------------------------------------------------
-const int DOWN = 0;
-const int RIGHT = 1;
-const int UP = 2;
-const int LEFT = 3;
+// 4 direction array (up, right, down, left)
+const int dx[] = {0, 1, 0, -1};
+const int dy[] = {-1, 0, 1, 0};
 
 // Lookup table for wall characters based on surrounding value
 constexpr unsigned char WallTypeByPattern[16] = {
@@ -31,7 +31,7 @@ constexpr unsigned char WallTypeByPattern[16] = {
 
 //----FUNCTION PROTOTYPES---------------------------------------------
 void ResetGrid(char **grid); //Fill the array with the WALL sign
-void Visit(int x, int y, char **grid); // Move in the array and make a path (The main method to creat the maze)
+void CarveMaze(char** grid, int currentX, int currentY); // Move in the array and make a path (The main method to creat the maze)
 void BreakWalls(char **grid); // After the maze was made, it breaks additional paths
 void RedoWalls(char **grid); // Convert the walls from the default version to a better looking tiles
 void InsertHostages(char **grid,
@@ -41,11 +41,11 @@ Point InsertUnitEntrance(char **grid); // Find a good position for the units to 
 //----FUNCTIONS-------------------------------------------------------
 // Function to generate the maze and place important features like hostages and the unit entrance.
 // This acts as the main orchestrator for the maze creation process.
-Point Generate(char **grid, HostageStation **HostageStations) {
+Point GenerateSimulationEnvironment(char **grid, HostageStation **HostageStations) {
     // Start by filling the grid with walls.
     ResetGrid(grid);
     // Use a recursive backtracking to carve out the main paths of the maze, starting from (1, 1).
-    Visit(1, 1, grid);
+    CarveMaze(grid, 1, 1);
     // Break some additional walls to create more complex paths in the maze.
     BreakWalls(grid);
     // Refine the visual representation of the walls.
@@ -66,51 +66,77 @@ void ResetGrid(char **grid) {
     }
 }
 
-// Returns "true" if x and y are both in-bounds.
-int IsInMaze(int x, int y) {
-    if (x < 1 || x >= GRID_WIDTH - 1) return false;
-    if (y < 1 || y >= GRID_HEIGHT - 1) return false;
-    return true;
-}
+// Check if a cell is unvisited (surrounded by walls)
+bool IsUnvisited(char** grid, int x, int y) {
+    if (!IsInArrayBounds(x, y)) return false;
 
-void Visit(int x, int y, char **grid) {
-    // Set my current location to be an empty passage.
-    grid[x][y] = PATH;
-
-    // Create a local array containing the 4 directions and shuffle their order.
-    int dirs[4] = {DOWN, RIGHT, UP, LEFT};
-    for (int i = 0; i < 4; ++i) {
-        int r = rand() % 4;
-        dirs[r] = dirs[r] ^ dirs[i]; // Switch between two random elements
-        dirs[i] = dirs[r] ^ dirs[i];
-        dirs[r] = dirs[r] ^ dirs[i];
-    }
-
-    // Loop through every direction and attempt to Visit that direction.
-    for (int i = 0; i < 4; ++i) {
-        int dx = 0, dy = 0;
-        switch (dirs[i]) {
-            case DOWN: dy = -1;
-                break;
-            case UP: dy = 1;
-                break;
-            case RIGHT: dx = 1;
-                break;
-            case LEFT: dx = -1;
-                break;
-        }
-
-        int x2 = x + (dx * 2);
-        int y2 = y + (dy * 2);
-
-        if (IsInArrayBounds(x2, y2)) {
-            // In-bounds check
-            if (grid[x2][y2] == WALL) {
-                grid[x + dx][y + dy] = PATH; // Knock down the wall
-                Visit(x2, y2, grid);
+    // Check if this position and all around it are walls
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            int newX = x + i;
+            int newY = y + j;
+            if (IsInArrayBounds(newX, newY)) {
+                if (grid[newY][newX] != WALL) return false;
             }
         }
     }
+    return true;
+}
+
+// Get unvisited neighbors that are 2 cells away
+std::vector<Point> GetUnvisitedNeighbors(char** grid, int x, int y) {
+    std::vector<Point> neighbors;
+
+    for (int i = 0; i < 4; i++) {
+        int newX = x + dx[i] * 2;  // Move 2 Points in each direction
+        int newY = y + dy[i] * 2;
+
+        if (IsUnvisited(grid, newX, newY)) {
+            neighbors.push_back(Point(newX, newY));
+        }
+    }
+
+    return neighbors;
+}
+
+// Create a path between two Points
+void CreatePath(char** grid, int x1, int y1, int x2, int y2) {
+    grid[y1][x1] = PATH;
+    grid[y2][x2] = PATH;
+
+    // Create path in the Point between them
+    int midX = x1 + (x2 - x1) / 2;
+    int midY = y1 + (y2 - y1) / 2;
+    grid[midY][midX] = PATH;
+}
+
+// Shuffle vector using Fisher-Yates algorithm
+void ShuffleVector(std::vector<Point>& vec) {
+    for (int i = vec.size() - 1; i > 0; i--) {
+        int j = rand() % (i + 1);
+        std::swap(vec[i], vec[j]);
+    }
+}
+
+// Generate maze using true recursive backtracking
+void CarveMaze(char** grid, int currentX, int currentY) {
+    grid[currentY][currentX] = PATH; // Mark the current cell as a path
+
+    std::vector<Point> neighbors = GetUnvisitedNeighbors(grid, currentX, currentY);
+    ShuffleVector(neighbors); // Randomize the order of neighbors
+
+    for (const Point& next : neighbors) {
+        CreatePath(grid, currentX, currentY, next.x, next.y);
+        // Recursive call to explore from the new cell
+        CarveMaze(grid, next.x, next.y);
+    }
+}
+
+// Returns true if x and y are both in-bounds.
+bool IsInMaze(int x, int y) {
+    if (x < 1 || x >= GRID_WIDTH - 1) return false;
+    if (y < 1 || y >= GRID_HEIGHT - 1) return false;
+    return true;
 }
 
 // Check if a wall is breakable

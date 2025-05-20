@@ -40,8 +40,8 @@ int main() {
     HostageStation **HostageStations = new HostageStation *[numOfSections];
     map<PathKey, vector<Point> > pathsBetweenStations;
 
-    // Generate maze and hostages (in the future, maybe units)
-    Point unitsEntrance = Generate(grid, HostageStations);
+    // Generate simulation environment with the stations and units entrance.
+    Point unitsEntrance = GenerateSimulationEnvironment(grid, HostageStations);
 
     // Array that holds the points to all hostage station and the unit starting point.
     Point *importantPoints = new Point[numOfSections + 1];
