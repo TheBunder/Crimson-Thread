@@ -146,7 +146,7 @@ bool EnableAnsiEscapeCodes() {
 void MakeFullScreen() {
     // Constants specific to this F11 toggling logic
     const std::chrono::milliseconds sleepDurationAfterKeySim(50); // Time to wait after simulating F11
-    const int height_change_tolerance = 3; // If height changes by less than this many rows after F11, assume it didn't exit fullscreen
+    const int heightChangeTolerance = 3; // If height changes by less than this many rows after F11, assume it didn't exit fullscreen
 
     // Get initial height before first F11 press
     int initialHeight = GetConsoleWindowHeight();
@@ -163,7 +163,7 @@ void MakeFullScreen() {
 
     // If the height significantly decreased, it means F11 likely toggled fullscreen OFF
     // We also check heightAfterFirstF11 != -1 in case the get height call failed after simulation
-    if (heightAfterFirstF11 != -1 && heightAfterFirstF11 < initialHeight - height_change_tolerance) {
+    if (heightAfterFirstF11 != -1 && heightAfterFirstF11 < initialHeight - heightChangeTolerance) {
          SimulateF11Fullscreen();
          // Give the terminal time to process the second F11 key press
          std::this_thread::sleep_for(sleepDurationAfterKeySim);

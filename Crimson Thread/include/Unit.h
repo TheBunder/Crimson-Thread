@@ -17,7 +17,7 @@ private:
 public:
     queue<Point> GetPath();
 
-    Unit(Point entrance, vector<LocationID> &OperationOrder,
+    Unit(Point entrance, vector<LocationID> &operationOrder,
                map<PathKey, vector<Point> > &pathsBetweenStations);
 
     int GetX() const;
@@ -34,7 +34,7 @@ public:
 
     Point GetPreviousCoords() const;
 
-    void SetPreviousCoords(Point previous_coords);
+    void SetPreviousCoords(Point previousCoords);
     void SetPreviousCoords(int x, int y);
 
     Point GetNextStationCoords() const;

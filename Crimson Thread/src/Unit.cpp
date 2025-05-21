@@ -63,10 +63,10 @@ void Unit::SetStationsCoords(vector<LocationID> &operationOrder, map<PathKey, ve
     }
 }
 
-Unit::Unit(Point entrance, vector<LocationID> &OperationOrder,
+Unit::Unit(Point entrance, vector<LocationID> &operationOrder,
            map<PathKey, vector<Point> > &pathsBetweenStations): coords(entrance) {
-    SetPath(OperationOrder, pathsBetweenStations);
-    SetStationsCoords(OperationOrder, pathsBetweenStations);
+    SetPath(operationOrder, pathsBetweenStations);
+    SetStationsCoords(operationOrder, pathsBetweenStations);
 }
 
 int Unit::GetX() const { return coords.x; }
@@ -109,8 +109,8 @@ Point Unit::GetPreviousCoords() const {
     return previousCoords;
 }
 
-void Unit::SetPreviousCoords(Point previous_coords) {
-    previousCoords = previous_coords;
+void Unit::SetPreviousCoords(Point previousCoords) {
+    this->previousCoords = previousCoords;
 }
 
 void Unit::SetPreviousCoords(int x, int y) {

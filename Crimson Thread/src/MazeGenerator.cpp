@@ -10,7 +10,7 @@ const int dx[] = {0, 1, 0, -1};
 const int dy[] = {-1, 0, 1, 0};
 
 // Lookup table for wall characters based on surrounding value
-constexpr unsigned char WallTypeByPattern[16] = {
+constexpr unsigned char WALL_TYPE_BY_PATTERN[16] = {
     MazeChar::HorizontalWall, // 0: No walls around
     MazeChar::HorizontalWall, // 1: Wall to the right
     MazeChar::VerticalWall, // 2: Wall below
@@ -35,13 +35,13 @@ void CarveMaze(char** grid, int currentX, int currentY); // Move in the array an
 void BreakWalls(char **grid); // After the maze was made, it breaks additional paths
 void RedoWalls(char **grid); // Convert the walls from the default version to a better looking tiles
 void InsertHostages(char **grid,
-                    HostageStation **HostageStations); // Add people (Hostages and\or kidnappers) to the maze
+                    HostageStation **hostageStations); // Add people (Hostages and\or kidnappers) to the maze
 Point InsertUnitEntrance(char **grid); // Find a good position for the units to start.
 
 //----FUNCTIONS-------------------------------------------------------
 // Function to generate the maze and place important features like hostages and the unit entrance.
 // This acts as the main orchestrator for the maze creation process.
-Point GenerateSimulationEnvironment(char **grid, HostageStation **HostageStations) {
+Point GenerateSimulationEnvironment(char **grid, HostageStation **hostageStations) {
     // Start by filling the grid with walls.
     ResetGrid(grid);
     // Use a recursive backtracking to carve out the main paths of the maze, starting from (1, 1).
@@ -50,8 +50,8 @@ Point GenerateSimulationEnvironment(char **grid, HostageStation **HostageStation
     BreakWalls(grid);
     // Refine the visual representation of the walls.
     RedoWalls(grid);
-    // Insert and creat the HostageStations entities into the generated maze grid.
-    InsertHostages(grid, HostageStations);
+    // Insert and creat the hostageStations entities into the generated maze grid.
+    InsertHostages(grid, hostageStations);
     // Find and insert a suitable starting position for the units within the maze.
     // Return the coordinates of this starting position.
     return InsertUnitEntrance(grid);
@@ -245,7 +245,7 @@ bool SearchSubgridModular(char **grid, int leftBound, int bottomBound, int start
     return false;
 }
 
-void InsertHostages(char **grid, HostageStation **HostageStations) {
+void InsertHostages(char **grid, HostageStation **hostageStations) {
     int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
 
     for (int sectionIndex = 0; sectionIndex < numOfSections; sectionIndex++) {
@@ -268,12 +268,12 @@ void InsertHostages(char **grid, HostageStation **HostageStations) {
 
         // Create HostageStation
         if (placed) {
-            HostageStations[sectionIndex] = new HostageStation(finalX, finalY, sectionIndex, (double)(rand() % 101) / 100,
+            hostageStations[sectionIndex] = new HostageStation(finalX, finalY, sectionIndex, (double)(rand() % 101) / 100,
                                                     rand() % 10 + 1, (double)(rand() % 71) / 100,
                                                     (double)(rand() % 41) / 100);
         } else {
             // This subgrid has no PATH cells at all
-            HostageStations[sectionIndex] = new HostageStation(-1, -1, sectionIndex, 0.0,
+            hostageStations[sectionIndex] = new HostageStation(-1, -1, sectionIndex, 0.0,
                                                                     0, 0.0, 0.0);
         }
     }
@@ -310,7 +310,7 @@ void RedoInnerWalls(char **grid) {
     for (int y = 1; y < GRID_HEIGHT - 1; y++) {
         for (int x = 1; x < GRID_WIDTH - 1; x++) {
             if (grid[x][y] == WALL) {
-                grid[x][y] = WallTypeByPattern[GetWallSurroundingValue(x, y, grid)];
+                grid[x][y] = WALL_TYPE_BY_PATTERN[GetWallSurroundingValue(x, y, grid)];
             }
         }
     }

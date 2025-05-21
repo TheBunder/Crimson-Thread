@@ -25,11 +25,11 @@ struct Chromosome {
 
 //----FUNCTION DECLARATIONS------------------------------------------
 // Helper to get cost (length - 1), returns -1 or throws if path not found
-double SumPValue(vector<vector<LocationID> > plan, HostageStation **HostageStations);
+double SumPValue(vector<vector<LocationID> > plan, HostageStation **hostageStations);
 
 // Get the total PValue from the plan
 vector<vector<LocationID> > MainAlgorithm(const map<PathKey, vector<Point> > &pathsBetweenStations,
                                           int numOfHostageStations,
                                           int numOfUnits,
-                                          HostageStation **HostageStations); //initialize chromosome population
+                                          HostageStation **hostageStations); //initialize chromosome population
 #endif //GENETIC_ALGORITHM_H

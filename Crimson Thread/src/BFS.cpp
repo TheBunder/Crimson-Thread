@@ -25,23 +25,23 @@ bool CheckValidCell(int x, int y, char **grid) {
     return IsInArrayBounds(x, y) && (grid[x][y] == State::kEmpty);
 }
 
-void AddToOpen(int x, int y, queue<Point> &open_Points, char **grid) {
+void AddToOpen(int x, int y, queue<Point> &openPoints, char **grid) {
     Point point{x, y};
 
-    open_Points.push(point);
-    grid[x][y] = State::kClosed;
+    openPoints.push(point);
+    grid[x][y] = kClosed;
 }
 
-void ExpandNeighbors(const Point current_point, queue<Point> &uncheckedPoints, char **grid, Point **parentGrid) {
+void ExpandNeighbors(const Point currentPoint, queue<Point> &uncheckedPoints, char **grid, Point **parentGrid) {
     vector<Point> possibleMovements{{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
 
     for (Point movement: possibleMovements) {
-        int x_test = current_point.x + movement.x;
-        int y_test = current_point.y + movement.y;
-        if (CheckValidCell(x_test, y_test, grid)) {
+        int xTest = currentPoint.x + movement.x;
+        int yTest = currentPoint.y + movement.y;
+        if (CheckValidCell(xTest, yTest, grid)) {
             // Store parent relationship before adding to open list
-            parentGrid[x_test][y_test] = current_point;
-            AddToOpen(x_test, y_test, uncheckedPoints, grid);
+            parentGrid[xTest][yTest] = currentPoint;
+            AddToOpen(xTest, yTest, uncheckedPoints, grid);
         }
     }
 }
@@ -65,16 +65,16 @@ vector<Point> ReconstructPath(Point **parentGrid, Point start, Point goal) {
     return path;
 }
 
-void ReconstructPaths(Point **parentGrid, LocationID ID, Point start, Point *importantPoints, int importantPointsSize,
+void ReconstructPaths(Point **parentGrid, LocationID startID, Point start, Point *importantPoints, int importantPointsSize,
                       map<PathKey, vector<Point> > &pathsBetweenStations, mutex &pathMapMutex) {
-    for (LocationID i = ID; i < importantPointsSize; i++) {
+    for (LocationID i = startID; i < importantPointsSize; i++) {
         vector<Point> path = ReconstructPath(parentGrid, start, importantPoints[i]);
 
         // Acquire the lock before accessing the shared map
         std::lock_guard<std::mutex> lock(pathMapMutex);
 
         // Insert the calculated path into the map
-        pathsBetweenStations[{ID, i}] = path;
+        pathsBetweenStations[{startID, i}] = path;
 
         // The lock is automatically released when it goes out of scope
     }
@@ -104,7 +104,7 @@ void Search(char **grid, Point start, Point **parentGrid) {
     }
 }
 
-void BFS(char **grid, LocationID ID, Point start, Point *importantPoints, int importantPointsSize,
+void BFS(char **grid, LocationID startID, Point start, Point *importantPoints, int importantPointsSize,
          map<PathKey, vector<Point> > &pathsBetweenStations, mutex &pathMapMutex) {
     // Allocate memory for the parent grid, used to reconstruct paths after the search.
     Point **parentGrid = AllocateParentGrid();
@@ -129,7 +129,7 @@ void BFS(char **grid, LocationID ID, Point start, Point *importantPoints, int im
     Search(navGrid, start, parentGrid);
 
     // Reconstruct paths from the 'start' point (identified by 'ID') to all points in the 'importantPoints' array.
-    ReconstructPaths(parentGrid, ID, start, importantPoints, importantPointsSize, pathsBetweenStations, pathMapMutex);
+    ReconstructPaths(parentGrid, startID, start, importantPoints, importantPointsSize, pathsBetweenStations, pathMapMutex);
 
     // Deallocate the memory used by the temporary navigation grid.
     DeallocateGrid(navGrid);

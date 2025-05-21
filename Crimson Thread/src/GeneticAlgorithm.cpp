@@ -3,9 +3,7 @@
 #include <cstdio>
 #include <set>
 # include "include/GeneticAlgorithm.h"
-
 #include <algorithm>
-
 #include "include/ThreadPool.h"
 
 //----FUNCTIONS-------------------------------------------------------
@@ -23,12 +21,12 @@ int GetPathCost(LocationID id1, LocationID id2, const map<PathKey, vector<Point>
     return static_cast<int>(it->second.size()) - 1;
 }
 
-double SumPValue(vector<vector<LocationID> > plan, HostageStation **HostageStations) {
+double SumPValue(vector<vector<LocationID> > plan, HostageStation **hostageStations) {
     double sum = 0;
     for (int i = 0; i < plan.size(); i++) {
         for (int j = 1; j < plan[i].size(); j++) {
             // Skip the units starting position
-            sum += HostageStations[plan[i][j] - 1]->GetPValue(); // removed one to turn back to index
+            sum += hostageStations[plan[i][j] - 1]->GetPValue(); // removed one to turn back to index
         }
     }
 
@@ -52,7 +50,7 @@ bool IsValid(Chromosome *chromosome, const map<PathKey, vector<Point> > &pathsBe
     }
 
     // A set to store encountered LocationIDs
-    std::set<LocationID> encountered_stations;
+    std::set<LocationID> encounteredStations;
     int pathLength = 0;
 
     int i = 0;
@@ -65,8 +63,8 @@ bool IsValid(Chromosome *chromosome, const map<PathKey, vector<Point> > &pathsBe
             if (pathLength > UNIT_STEP_BUDGET) {
                 return false; // One of the units have passed the budget
             }
-            if (!encountered_stations.insert(unitPath[s]).second) {
-                // Insertion failed because the station_id was already in the set
+            if (!encounteredStations.insert(unitPath[s]).second) {
+                // Insertion failed because the stationID was already in the set
                 // This means we found a duplicate
                 return false;
             }
@@ -82,15 +80,15 @@ bool IsValid(Chromosome *chromosome, const map<PathKey, vector<Point> > &pathsBe
     return true;
 }
 
-Chromosome *GetFittestChromosome(Chromosome **chromosomeArray, HostageStation **HostageStations, int population) {
+Chromosome *GetFittestChromosome(Chromosome **chromosomeArray, HostageStation **hostageStations, int population) {
     // Set the first as the best we found
     Chromosome *fittest = chromosomeArray[0];
     // Get the fitness of the best
-    double fittestPValue = SumPValue(fittest->unitPaths, HostageStations);
+    double fittestPValue = SumPValue(fittest->unitPaths, hostageStations);
     double chromosomePValue;
     for (int i = 0; i < population; ++i) {
         // Get the fittness of the chromosome we currently check
-        chromosomePValue = SumPValue(chromosomeArray[i]->unitPaths, HostageStations);
+        chromosomePValue = SumPValue(chromosomeArray[i]->unitPaths, hostageStations);
 
         // Check if we found a better chromosome
         if (chromosomePValue > fittestPValue) {
@@ -259,7 +257,7 @@ void Initialization(Chromosome **chromosomeArray, const map<PathKey, vector<Poin
 }
 
 void CalculateFitness(Chromosome *chromosome, const map<PathKey, vector<Point> > &pathsBetweenStations,
-                      HostageStation **HostageStations) {
+                      HostageStation **hostageStations) {
     // Check if valid chromosome
     bool valid = IsValid(chromosome, pathsBetweenStations);
     chromosome->isValid = valid;
@@ -268,7 +266,7 @@ void CalculateFitness(Chromosome *chromosome, const map<PathKey, vector<Point> >
         chromosome->fitness = -1;
     } else {
         // set the real fitness
-        chromosome->fitness = SumPValue(chromosome->unitPaths, HostageStations);
+        chromosome->fitness = SumPValue(chromosome->unitPaths, hostageStations);
     }
 
     // Mark the chromosome as evaluated
@@ -276,7 +274,7 @@ void CalculateFitness(Chromosome *chromosome, const map<PathKey, vector<Point> >
 }
 
 void EvaluatePopulationFitness(Chromosome **chromosomeArray, const map<PathKey, vector<Point> > &pathsBetweenStations,
-                               HostageStation **HostageStations, ThreadPool &pool) {
+                               HostageStation **hostageStations, ThreadPool &pool) {
     // Iterate through each chromosome in the population.
     for (int i = 0; i < POPULATION_SIZE; ++i) {
         // Check if the chromosome needs fitness evaluation.
@@ -288,7 +286,7 @@ void EvaluatePopulationFitness(Chromosome **chromosomeArray, const map<PathKey, 
             // });
 
             // Calculate fitness without threading
-            CalculateFitness(chromosomeArray[i], pathsBetweenStations, HostageStations);
+            CalculateFitness(chromosomeArray[i], pathsBetweenStations, hostageStations);
         }
     }
 
@@ -366,34 +364,34 @@ LocationID FindRandomUnusedStation(const Chromosome *chromosome, const int numOf
     }
 
     // 1. Collect all used LocationIDs in the chromosome
-    std::set<LocationID> used_stations;
+    std::set<LocationID> usedStations;
     for (const vector<LocationID> path: chromosome->unitPaths) {
         // Assuming path starts at index 0, include all stations in the path
-        for (const LocationID station_id: path) {
-            used_stations.insert(station_id);
+        for (const LocationID stationID: path) {
+            usedStations.insert(stationID);
         }
     }
 
     // 2. Collect all unused LocationIDs from the list of all possible stations
-    std::vector<LocationID> available_stations;
-    for (int station_id = 1; station_id <= numOfHostageStations; ++station_id) {
+    std::vector<LocationID> availableStations;
+    for (int stationID = 1; stationID <= numOfHostageStations; ++stationID) {
         // Check if the possible_station is NOT in the set of used_stations
-        if (used_stations.find(station_id) == used_stations.end()) {
+        if (usedStations.find(stationID) == usedStations.end()) {
             // It's not in the used set, so it's available
-            available_stations.push_back(station_id);
+            availableStations.push_back(stationID);
         }
     }
 
     // 3. Pick a random station from the available ones
-    if (available_stations.empty()) {
+    if (availableStations.empty()) {
         // No unused stations available in this chromosome
         return -1;
     } else {
         // Generate a random index within the bounds of the available_stations vector
-        int randomIndex = rand() % available_stations.size();
+        int randomIndex = rand() % availableStations.size();
 
         // Return the station at that random index
-        return available_stations[randomIndex];
+        return availableStations[randomIndex];
     }
 }
 
@@ -694,7 +692,7 @@ void FindBestPathInPlanBruteForce(vector<vector<LocationID>> &fullPlan,
 
 vector<vector<LocationID> > MainAlgorithm(const map<PathKey, vector<Point> > &pathsBetweenStations,
                                           int numOfUnits,
-                                          int numOfHostageStations, HostageStation **HostageStations) {
+                                          int numOfHostageStations, HostageStation **hostageStations) {
     // Create thread pool with hardware_concurrency threads
     ThreadPool pool(thread::hardware_concurrency());
 
@@ -705,7 +703,7 @@ vector<vector<LocationID> > MainAlgorithm(const map<PathKey, vector<Point> > &pa
 
     // Create and evaluate Generation 0
     Initialization(currentPopulation, pathsBetweenStations, numOfUnits, numOfHostageStations);
-    EvaluatePopulationFitness(currentPopulation, pathsBetweenStations, HostageStations, pool);
+    EvaluatePopulationFitness(currentPopulation, pathsBetweenStations, hostageStations, pool);
 
     for (int G = 0; G < GENERATIONS; ++G) {
         // 1. Selection: Choose parents from currentPopulation based on fitness, fill matingPool
@@ -720,7 +718,7 @@ vector<vector<LocationID> > MainAlgorithm(const map<PathKey, vector<Point> > &pa
 
         // 4. Evaluate Fitness of New Offspring using the thread pool
         // Only evaluates offspring marked as needing evaluation by Crossover/Mutation.
-        EvaluatePopulationFitness(offspringPopulation, pathsBetweenStations, HostageStations, pool);
+        EvaluatePopulationFitness(offspringPopulation, pathsBetweenStations, hostageStations, pool);
 
         // 5. Creat the real next generation
         PerformElitismAndReplacement(currentPopulation, offspringPopulation);
