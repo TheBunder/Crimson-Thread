@@ -24,8 +24,6 @@ struct Chromosome {
 };
 
 //----FUNCTION DECLARATIONS------------------------------------------
-int GetPathCost(LocationID id1, LocationID id2, const map<PathKey, vector<Point> > &pathsBetweenStations);
-
 // Helper to get cost (length - 1), returns -1 or throws if path not found
 double SumPValue(vector<vector<LocationID> > plan, HostageStation **HostageStations);
 
