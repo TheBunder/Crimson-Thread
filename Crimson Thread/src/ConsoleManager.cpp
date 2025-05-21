@@ -18,13 +18,34 @@ int GetConsoleWindowHeight() {
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) {
         // Use fprintf to stderr for error messages
-        fprintf(stderr, "Error: Could not get console screen buffer info in GetConsoleWindowHeight. Code: %lu\n", GetLastError());
+        fprintf(stderr, "Error: Could not get console screen buffer info in GetConsoleWindowHeight. Code: %lu\n",
+                GetLastError());
         return -1; // Indicate an error
     }
 
     // Calculate height from the visible window rectangle
     // srWindow.Bottom and srWindow.Top are 0-based, so we add 1 for the total number of rows
     return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+}
+
+// Function to get the console window width in character columns
+int GetConsoleWindowWidth() {
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hConsole == INVALID_HANDLE_VALUE) {
+        fprintf(stderr, "Error: Could not get console handle in GetConsoleWindowWidth. Code: %lu\n", GetLastError());
+        return -1;
+    }
+
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) {
+        fprintf(stderr, "Error: Could not get console screen buffer info in GetConsoleWindowWidth. Code: %lu\n",
+                GetLastError());
+        return -1;
+    }
+
+    // Calculate width from the visible window rectangle
+    // srWindow.Right and srWindow.Left are 0-based, so we add 1 for the total number of columns
+    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
 }
 
 // Function to simulate pressing Ctrl and Minus for zooming out
@@ -146,13 +167,14 @@ bool EnableAnsiEscapeCodes() {
 void MakeFullScreen() {
     // Constants specific to this F11 toggling logic
     const std::chrono::milliseconds sleepDurationAfterKeySim(50); // Time to wait after simulating F11
-    const int heightChangeTolerance = 3; // If height changes by less than this many rows after F11, assume it didn't exit fullscreen
+    const int heightChangeTolerance = 3;
+    // If height changes by less than this many rows after F11, assume it didn't exit fullscreen
 
     // Get initial height before first F11 press
     int initialHeight = GetConsoleWindowHeight();
     if (initialHeight == -1) {
-         printf("Error getting initial console height. Cannot reliably perform F11 check.\n");
-         return; // Exit the function if we can't check height
+        printf("Error getting initial console height. Cannot reliably perform F11 check.\n");
+        return; // Exit the function if we can't check height
     }
 
     SimulateF11Fullscreen();
@@ -164,9 +186,9 @@ void MakeFullScreen() {
     // If the height significantly decreased, it means F11 likely toggled fullscreen OFF
     // We also check heightAfterFirstF11 != -1 in case the get height call failed after simulation
     if (heightAfterFirstF11 != -1 && heightAfterFirstF11 < initialHeight - heightChangeTolerance) {
-         SimulateF11Fullscreen();
-         // Give the terminal time to process the second F11 key press
-         std::this_thread::sleep_for(sleepDurationAfterKeySim);
+        SimulateF11Fullscreen();
+        // Give the terminal time to process the second F11 key press
+        std::this_thread::sleep_for(sleepDurationAfterKeySim);
     }
 }
 
@@ -176,35 +198,65 @@ void SetConsole() {
     // Ensure console is fullscreen using the F11 toggle logic
     MakeFullScreen();
 
-    const int targetHeight = GRID_HEIGHT + 10;
-    const int tolerance = 5; // Allow height to be within +/- tolerance of the target
+    const int targetHeight = GRID_HEIGHT + 4;
+    const int targetWidth = GRID_WIDTH + 10;
+    const int tolerance = 2; // Allow height to be within +/- tolerance of the target
     const int maxAttempts = 100; // Prevent infinite loops
     const std::chrono::milliseconds sleepDuration(50); // Time to wait between zoom steps
 
-    printf("Attempting to adjust console height to fit the grid.\n",targetHeight);
+    printf("Attempting to adjust console height to fit the grid.\n", targetHeight);
 
     int currentHeight = GetConsoleWindowHeight();
+    int currentWidth = GetConsoleWindowWidth();
     int attempts = 0;
+    bool stopFlag = false;
 
-    while (abs(currentHeight - targetHeight) > tolerance && attempts < maxAttempts) {
-        if (currentHeight == -1) {
-            printf("Error getting console height. Aborting.");
-            break;
-        }
+    if (currentHeight == -1 || currentWidth == -1) {
+        printf("Error getting console height. Aborting.");
+        stopFlag = true;
+    }
 
-        if (currentHeight < targetHeight) {
-            // printf("Current height (%d) is less than target (%d). Zooming out...", currentHeight, targetHeight);
-            SimulateCtrlMinusZoomOut();
-        } else { // currentHeight > targetHeight
-            // printf("Current height (%d) is greater than target (%d). Zooming in...", currentHeight, targetHeight);
+    // Step 1: make the grid as big as it can and still\ close to fit.
+    while (!stopFlag &&
+           (currentHeight > targetHeight + tolerance || currentWidth > targetWidth + tolerance)
+           && attempts < maxAttempts) {
+        if (abs(currentHeight - targetHeight) < tolerance && abs(currentWidth - targetWidth) < tolerance) {
+            stopFlag = true;
+        } else {
             SimulateCtrlPlusZoomIn();
         }
 
         std::this_thread::sleep_for(sleepDuration); // Wait for the terminal to react
         currentHeight = GetConsoleWindowHeight();
+        currentWidth = GetConsoleWindowWidth();
         attempts++;
+
+        if (currentHeight == -1 || currentWidth == -1) {
+            printf("Error getting console height. Aborting.");
+            stopFlag = true;
+        }
     }
 
-    printf("Adjustment completed.\n");
-}
+    // Step 2: Make the grid as small as it needs to fit.
+    while (!stopFlag &&
+           (currentHeight < targetHeight - tolerance || currentWidth < targetWidth - tolerance)
+           && attempts < maxAttempts) {
+        if (abs(currentHeight - targetHeight) < tolerance && abs(currentWidth - targetWidth) < tolerance) {
+            stopFlag = true;
+        } else {
+            SimulateCtrlMinusZoomOut();
+        }
 
+        std::this_thread::sleep_for(sleepDuration); // Wait for the terminal to react
+        currentHeight = GetConsoleWindowHeight();
+        currentWidth = GetConsoleWindowWidth();
+        attempts++;
+
+        if (currentHeight == -1 || currentWidth == -1) {
+            printf("Error getting console height. Aborting.");
+            stopFlag = true;
+        }
+    }
+
+    printf("Adjustment completed. Please don't revert the adjustment.\n");
+}

@@ -24,8 +24,8 @@ using PathKey = pair<LocationID, LocationID>;
 
 //----CONSTANTS------------------------------------------------------
 const int GRID_SIZE = 101;
-const int GRID_WIDTH = GRID_SIZE;
-const int GRID_HEIGHT = GRID_SIZE;
+const int GRID_WIDTH = 201;
+const int GRID_HEIGHT = 51;
 const int NUM_SUBGRIDS_PER_DIMENSION = 4;
 const int SUBGRID_SIZE = GRID_SIZE / NUM_SUBGRIDS_PER_DIMENSION;
 const char	WALL = 219;			// █

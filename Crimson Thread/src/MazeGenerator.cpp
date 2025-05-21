@@ -61,7 +61,7 @@ Point GenerateSimulationEnvironment(char **grid, HostageStation **hostageStation
 void ResetGrid(char **grid) {
     for (int y = 0; y < GRID_HEIGHT; ++y) {
         for (int x = 0; x < GRID_WIDTH; ++x) {
-            grid[y][x] = WALL;
+            grid[x][y] = WALL;
         }
     }
 }
@@ -76,7 +76,7 @@ bool IsUnvisited(char** grid, int x, int y) {
             int newX = x + i;
             int newY = y + j;
             if (IsInArrayBounds(newX, newY)) {
-                if (grid[newY][newX] != WALL) return false;
+                if (grid[newX][newY] != WALL) return false;
             }
         }
     }
@@ -101,13 +101,13 @@ std::vector<Point> GetUnvisitedNeighbors(char** grid, int x, int y) {
 
 // Create a path between two Points
 void CreatePath(char** grid, int x1, int y1, int x2, int y2) {
-    grid[y1][x1] = PATH;
-    grid[y2][x2] = PATH;
+    grid[x1][y1] = PATH;
+    grid[x2][y2] = PATH;
 
     // Create path in the Point between them
     int midX = x1 + (x2 - x1) / 2;
     int midY = y1 + (y2 - y1) / 2;
-    grid[midY][midX] = PATH;
+    grid[midX][midY] = PATH;
 }
 
 // Shuffle vector using Fisher-Yates algorithm
@@ -120,7 +120,7 @@ void ShuffleVector(std::vector<Point>& vec) {
 
 // Generate maze using true recursive backtracking
 void CarveMaze(char** grid, int currentX, int currentY) {
-    grid[currentY][currentX] = PATH; // Mark the current cell as a path
+    grid[currentX][currentY] = PATH; // Mark the current cell as a path
 
     std::vector<Point> neighbors = GetUnvisitedNeighbors(grid, currentX, currentY);
     ShuffleVector(neighbors); // Randomize the order of neighbors
