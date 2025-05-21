@@ -126,9 +126,12 @@ void CarveMaze(char** grid, int currentX, int currentY) {
     ShuffleVector(neighbors); // Randomize the order of neighbors
 
     for (const Point& next : neighbors) {
-        CreatePath(grid, currentX, currentY, next.x, next.y);
-        // Recursive call to explore from the new cell
-        CarveMaze(grid, next.x, next.y);
+        // Check that noun of the recursive calls changed the neighbor
+        if (IsUnvisited(grid, next.x, next.y)) {
+            CreatePath(grid, currentX, currentY, next.x, next.y);
+            // Recursive call to explore from the new cell
+            CarveMaze(grid, next.x, next.y);
+        }
     }
 }
 
