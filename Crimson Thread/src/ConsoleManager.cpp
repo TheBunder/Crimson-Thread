@@ -218,7 +218,7 @@ void SetConsole() {
 
     // Step 1: make the grid as big as it can and still\ close to fit.
     while (!stopFlag &&
-           (currentHeight > targetHeight + tolerance || currentWidth > targetWidth + tolerance)
+    !(currentHeight < targetHeight - tolerance || currentWidth < targetWidth - tolerance)
            && attempts < maxAttempts) {
         if (abs(currentHeight - targetHeight) < tolerance && abs(currentWidth - targetWidth) < tolerance) {
             stopFlag = true;
