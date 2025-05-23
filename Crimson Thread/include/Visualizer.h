@@ -11,6 +11,9 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
 
 void HostagesColor();
 void UnitColor();
+void ErrorColor();
+void PrintError(const char* format, ...);
+void PrintWarning(const char* format, ...);
 void ResetFG();
 void PathColor();
 void FinishedPathColor();

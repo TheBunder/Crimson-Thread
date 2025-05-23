@@ -1,8 +1,8 @@
 ﻿//----INCLUDES--------------------------------------------------------
 #include <algorithm>
-#include <stack>
 #include "include/MazeGenerator.h"
 #include "include/Unit.h"
+#include "include/Visualizer.h"
 
 //----CONSTANTS-------------------------------------------------------
 // 4 direction array (up, right, down, left)
@@ -13,19 +13,19 @@ const int dy[] = {-1, 0, 1, 0};
 constexpr unsigned char WALL_TYPE_BY_PATTERN[16] = {
     MazeChar::HorizontalWall, // 0: No walls around
     MazeChar::HorizontalWall, // 1: Wall to the right
-    MazeChar::VerticalWall, // 2: Wall below
-    MazeChar::BottomLeftCorner, // 3: Wall to right and below
+    MazeChar::VerticalWall, // 2: Wall above
+    MazeChar::BottomLeftCorner, // 3: Wall to right and above
     MazeChar::HorizontalWall, // 4: Wall to the left
     MazeChar::HorizontalWall, // 5: Walls to right and left
-    MazeChar::BottomRightCorner, // 6: Walls to left and below
-    MazeChar::TopTee, // 7: Walls to right, left, and below
-    MazeChar::VerticalWall, // 8: Wall above
-    MazeChar::TopLeftCorner, // 9: Walls to right and above
-    MazeChar::VerticalWall, // 10: Walls above and below
-    MazeChar::RightTee, // 11: Walls to right, below, and above
-    MazeChar::TopRightCorner, // 12: Walls to left and above
-    MazeChar::BottomTee, // 13: Walls to right, left, and above
-    MazeChar::LeftTee, // 14: Walls to left, below, and above
+    MazeChar::BottomRightCorner, // 6: Walls to left and above
+    MazeChar::TopTee, // 7: Walls to right, left, and above
+    MazeChar::VerticalWall, // 8: Wall below
+    MazeChar::TopLeftCorner, // 9: Walls to right and below
+    MazeChar::VerticalWall, // 10: Walls below and above
+    MazeChar::RightTee, // 11: Walls to right, above, and below
+    MazeChar::TopRightCorner, // 12: Walls to left and below
+    MazeChar::BottomTee, // 13: Walls to right, left, and below
+    MazeChar::LeftTee, // 14: Walls to left, above, and below
     MazeChar::Cross // 15: Walls in all directions
 };
 
@@ -34,31 +34,47 @@ void ResetGrid(char **grid); //Fill the array with the WALL sign
 void CarveMaze(char** grid, int currentX, int currentY); // Move in the array and make a path (The main method to creat the maze)
 void BreakWalls(char **grid); // After the maze was made, it breaks additional paths
 void RedoWalls(char **grid); // Convert the walls from the default version to a better looking tiles
+void FillWithDefaultStations(HostageStation **hostageStation); // fill the entire hostages array with default values
 void InsertHostages(char **grid,
                     HostageStation **hostageStations); // Add people (Hostages and\or kidnappers) to the maze
 Point InsertUnitEntrance(char **grid); // Find a good position for the units to start.
 
 //----FUNCTIONS-------------------------------------------------------
-// Function to generate the maze and place important features like hostages and the unit entrance.
-// This acts as the main orchestrator for the maze creation process.
+// Generate te entire simulation environment including the maze, the hostage stations and the unit entrance.
 Point GenerateSimulationEnvironment(char **grid, HostageStation **hostageStations) {
-    // Start by filling the grid with walls.
+    if (grid == nullptr) {
+        PrintError("Error: GenerateSimulationEnvironment received null grid.\n");
+        FillWithDefaultStations(hostageStations);
+        return {-1, -1};
+    }
+    if (hostageStations == nullptr) {
+        PrintError("Error: GenerateSimulationEnvironment received null hostageStations.\n");
+        FillWithDefaultStations(hostageStations);
+        return {-1, -1};;
+    }
+
+    // 1. Start by filling the grid with walls.
     ResetGrid(grid);
-    // Use a recursive backtracking to carve out the main paths of the maze, starting from (1, 1).
+    // 2. Use a recursive backtracking to carve out the main paths of the maze, starting from (1, 1).
     CarveMaze(grid, 1, 1);
-    // Break some additional walls to create more complex paths in the maze.
+    // 3. Break some additional walls to create more ways to go between two points in the maze.
     BreakWalls(grid);
-    // Refine the visual representation of the walls.
+    // 4. Refine the visual representation of the walls.
     RedoWalls(grid);
-    // Insert and creat the hostageStations entities into the generated maze grid.
+    // 5. Creat and insert the hostageStations into the grid.
     InsertHostages(grid, hostageStations);
-    // Find and insert a suitable starting position for the units within the maze.
-    // Return the coordinates of this starting position.
+    // 6. Find and insert a fitting entrance position for the units within the maze, and return it.
     return InsertUnitEntrance(grid);
 }
 
 // Fills the grid with walls.
 void ResetGrid(char **grid) {
+    // Check if we got a valid pointer to a grid.
+    if (grid == nullptr) {
+        PrintError("Error: ResetGrid received a null grid pointer. Cannot reset grid.\n");
+        return; // Cannot proceed without a grid
+    }
+
     for (int y = 0; y < GRID_HEIGHT; ++y) {
         for (int x = 0; x < GRID_WIDTH; ++x) {
             grid[x][y] = WALL;
@@ -68,7 +84,14 @@ void ResetGrid(char **grid) {
 
 // Check if a cell is unvisited (surrounded by walls)
 bool IsUnvisited(char** grid, int x, int y) {
-    if (!IsInArrayBounds(x, y)) return false;
+    if (grid == nullptr) {
+        PrintError("Error: IsUnvisited received a null grid pointer.\n");
+        return false;
+    }
+
+    if (!IsInArrayBounds(x, y)) {
+        return false;
+    }
 
     // Check if this position and all around it are walls
     for (int i = -1; i <= 1; i++) {
@@ -80,19 +103,25 @@ bool IsUnvisited(char** grid, int x, int y) {
             }
         }
     }
+
+    // All the surroundings are walls, so it is truly unvisited.
     return true;
 }
 
 // Get unvisited neighbors that are 2 cells away
 std::vector<Point> GetUnvisitedNeighbors(char** grid, int x, int y) {
     std::vector<Point> neighbors;
+    if (grid == nullptr) {
+        PrintError("Error: GetUnvisitedNeighbors received a null grid pointer.\n");
+        return neighbors;
+    }
 
     for (int i = 0; i < 4; i++) {
         int newX = x + dx[i] * 2;  // Move 2 Points in each direction
         int newY = y + dy[i] * 2;
 
-        if (IsUnvisited(grid, newX, newY)) {
-            neighbors.push_back(Point(newX, newY));
+        if (IsUnvisited(grid, newX, newY)) { // only unvisited tiles can be neighbors
+            neighbors.emplace_back(newX, newY);
         }
     }
 
@@ -101,6 +130,11 @@ std::vector<Point> GetUnvisitedNeighbors(char** grid, int x, int y) {
 
 // Create a path between two Points
 void CreatePath(char** grid, int x1, int y1, int x2, int y2) {
+    if (grid == nullptr) {
+        PrintError("Error: CreatePath received a null grid pointer.\n");
+        return;
+    }
+
     grid[x1][y1] = PATH;
     grid[x2][y2] = PATH;
 
@@ -120,6 +154,15 @@ void ShuffleVector(std::vector<Point>& vec) {
 
 // Generate maze using true recursive backtracking
 void CarveMaze(char** grid, int currentX, int currentY) {
+    if (grid == nullptr) {
+        PrintError("Error: CarveMaze received a null grid pointer.\n");
+        return;
+    }
+    if (!IsInArrayBounds(currentX, currentY)) {
+        PrintError("Error: CarveMaze called with out-of-bounds initial coordinates (%d, %d). Aborting execution.\n", currentX, currentY);
+        return;
+    }
+
     grid[currentX][currentY] = PATH; // Mark the current cell as a path
 
     std::vector<Point> neighbors = GetUnvisitedNeighbors(grid, currentX, currentY);
@@ -135,7 +178,7 @@ void CarveMaze(char** grid, int currentX, int currentY) {
     }
 }
 
-// Returns true if x and y are both in-bounds.
+// Returns true if x and y are both in the internal bounds of the maze.
 bool IsInMaze(int x, int y) {
     if (x < 1 || x >= GRID_WIDTH - 1) return false;
     if (y < 1 || y >= GRID_HEIGHT - 1) return false;
@@ -144,57 +187,78 @@ bool IsInMaze(int x, int y) {
 
 // Check if a wall is breakable
 int IsBreakable(int x, int y, char **grid) {
-    if (!IsInMaze(x, y)) {
+    if (grid == nullptr) {
+        PrintError("Error: IsBreakable received a null grid pointer.\n");
         return false;
     }
-    return ((grid[x + 1][y] == WALL && grid[x - 1][y] == WALL
-             && !(grid[x][y + 1] == WALL || grid[x][y - 1] == WALL)) ||
-            (grid[x][y + 1] == WALL && grid[x][y - 1] == WALL && !
-             (grid[x + 1][y] == WALL || grid[x - 1][y] == WALL)));
+    if (!IsInMaze(x, y) || grid[x][y] != WALL) {
+        return false;
+    }
+
+    bool isHorizontalSegment = grid[x + 1][y] == WALL && grid[x - 1][y] == WALL;
+    bool isVerticalSegment = grid[x][y + 1] == WALL && grid[x][y - 1] == WALL;
+    bool hasNoHorizontalWallConnection  = !(grid[x + 1][y] == WALL || grid[x - 1][y] == WALL);
+    bool hasNoVerticalWallConnectio = !(grid[x][y + 1] == WALL || grid[x][y - 1] == WALL);
+
+    // Check if it is a continued of a wall and not an intersection.
+    return (isHorizontalSegment && hasNoVerticalWallConnectio) || (isVerticalSegment && hasNoHorizontalWallConnection);
 }
 
 void BreakWalls(char **grid) {
-    // Define the number of walls to attempt to break
-    int numOfWallsBroken = GRID_SIZE * 2;
-    // Variable to store a random linear index in the grid.
+    if (grid == nullptr) {
+        PrintError("Error: BreakWalls received a null grid pointer.\n");
+        return;
+    }
+
+    // Define the number of walls to break
+    int numOfWallsBroken = GRID_HEIGHT + GRID_WIDTH;
+    // Holds the location in the maze if it was one denominational.
     int location;
-    // Flag to indicate if a breakable wall has been found for the current attempt.
-    int brokeWall;
-    // Variables to store the 2D coordinates
+    // Flags to indicate stats.
+    bool brokeWall;
+    bool noMoreBreakableWalls = false;
+    // Store the coords
     int x, y;
 
-    for (int i = 0; i < numOfWallsBroken; i++) {
-        // Reset the flag for this wall-breaking attempt.
-        brokeWall = 0;
-        // Get an initial random number.
-        location = rand();
+    for (int i = 0; i < numOfWallsBroken && !noMoreBreakableWalls; i++) {
+        // Reset the flag for this attempt.
+        brokeWall = false;
+        // Get an initial random number to indicate a place.
+        int startLocation = rand() % (GRID_WIDTH * GRID_HEIGHT);
+        location = startLocation + 1;
 
-        // Loop until a breakable wall location is found.
-        while (!brokeWall) {
-            // Convert the random number into a linear index within the grid bounds.
+        // Loop until we find a suitable wall to break.
+        while (!brokeWall && !noMoreBreakableWalls) {
+            // Make sure the random number will be in the grid bounds.
             location %= (GRID_WIDTH * GRID_HEIGHT);
-            // Convert the linear index into 2D grid coordinates (x, y).
+            if (location == startLocation) {
+                noMoreBreakableWalls = true;
+            }
+
+            // Convert the number into a 2D location (x, y).
             x = location % GRID_WIDTH;
             y = location / GRID_WIDTH;
 
-            // Check if the current grid cell is a WALL AND if it meets the criteria to be breakable.
+            // Check if the current grid cell is a WALL and if it is suitable for breaking.
             if (grid[x][y] == WALL && IsBreakable(x, y, grid)) {
-                // If it's a breakable wall, set the flag to exit the while loop.
-                brokeWall = 1;
+                // If it's a breakable wall, set the flag to exit the loop and break.
+                brokeWall = true;
+                grid[x][y] = PATH;
             }
 
-            // Increment the location to check the next potential spot in the grid
-            // if the current one wasn't a breakable wall.
+            // Continue moving in the grid forward until we find a suitable wall.
             location++;
         }
-
-        // Break wall
-        grid[x][y] = PATH;
     }
 }
 
 // Try to place hostage station at random position or its 8 neighbors
 bool TryPlaceAtRandomPosition(char **grid, int leftBound, int bottomBound, int* finalX, int* finalY) {
+    if (grid == nullptr) {
+        PrintError("Error: TryPlaceAtRandomPosition received null grid.\n");
+        return false;
+    }
+
     // Generate random position within subgrid
     int randomX = leftBound + rand() % SUBGRID_SIZE;
     int randomY = bottomBound + rand() % SUBGRID_SIZE;
@@ -223,6 +287,11 @@ bool TryPlaceAtRandomPosition(char **grid, int leftBound, int bottomBound, int* 
 
 // Search entire subgrid using modular approach starting from given position
 bool SearchSubgridModular(char **grid, int leftBound, int bottomBound, int startX, int startY, int* finalX, int* finalY) {
+    if (grid == nullptr) {
+        PrintError("Error: SearchSubgridModular received null grid.\n");
+        return false;
+    }
+
     int startOffsetX = startX - leftBound;
     int startOffsetY = startY - bottomBound;
 
@@ -245,7 +314,39 @@ bool SearchSubgridModular(char **grid, int leftBound, int bottomBound, int start
     return false;
 }
 
+void FillWithDefaultStations(HostageStation **hostageStations) {
+    if (hostageStations == nullptr) {
+        PrintError("Error: FillWithDefaultStations received null hostageStations.\n");
+        return;
+    }
+
+    int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
+
+    for (int sectionIndex = 0; sectionIndex < numOfSections; sectionIndex++) {
+        hostageStations[sectionIndex] = new HostageStation(-1, -1, sectionIndex, 0.0,
+                                                                    0, 0.0, 0.0);
+    }
+}
+
 void InsertHostages(char **grid, HostageStation **hostageStations) {
+    if (grid == nullptr) {
+        PrintError("Error: InsertHostages received null grid.\n");
+        FillWithDefaultStations(hostageStations);
+        return;
+    }
+    if (hostageStations == nullptr) {
+        PrintError("Error: InsertHostages received null hostageStations.\n");
+        return;
+    }
+    if (SUBGRID_SIZE <= 0) {
+        PrintError("Error: SUBGRID_SIZE must be greater then 0.\n");
+        return;
+    }
+    if (SUBGRID_SIZE > GRID_WIDTH || SUBGRID_SIZE > GRID_HEIGHT) {
+        PrintError("Error: SUBGRID_SIZE must be smaller then the GRID_WIDTH and GRID_HEIGHT.\n");
+        return;
+    }
+
     int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
 
     for (int sectionIndex = 0; sectionIndex < numOfSections; sectionIndex++) {
@@ -261,7 +362,7 @@ void InsertHostages(char **grid, HostageStation **hostageStations) {
         // First try: Insert to a random position or to it's 8 surrounding neighbors.
         placed = TryPlaceAtRandomPosition(grid, leftBound, bottomBound, &finalX, &finalY);
 
-        // Second attempt: Search entire subgrid modularly if first attempt didn't find a place.
+        // Second attempt: Search entire subgrid modularly if the first attempt didn't find a place.
         if (!placed) {
             placed = SearchSubgridModular(grid, leftBound, bottomBound, finalX, finalY, &finalX, &finalY);
         }
@@ -280,6 +381,11 @@ void InsertHostages(char **grid, HostageStation **hostageStations) {
 }
 
 Point InsertUnitEntrance(char **grid) {
+    if (grid == nullptr) {
+        PrintError("Error: InsertUnitEntrance received a null grid pointer.\n");
+        return {-1, 1}; // Error value
+    }
+
     // Calculate the horizontal center of the grid.
     int widthCenter = GRID_WIDTH / 2;
 
@@ -296,27 +402,50 @@ Point InsertUnitEntrance(char **grid) {
     }
 
     // Handling the case where no entrance point is found. Even tho {1,1} will always be path.
+    PrintError("Error: No suitable entrance location was found.\n");
     return {-1, 1};
 }
 
 int GetWallSurroundingValue(int x, int y, char **grid) {
-    return (grid[x + 1][y] != PATH) * 1 + // Right neighbor
-           (grid[x][y + 1] != PATH) * 2 + // Top neighbor
-           (grid[x - 1][y] != PATH) * 4 + // Left neighbor
-           (grid[x][y - 1] != PATH) * 8; // Bottom neighbor
+    if (grid == nullptr) {
+        PrintError("Error: GetWallSurroundingValue received a null grid pointer.\n");
+        return -1; // Error value
+    }
+    if (!IsInMaze(x,y)) {
+        PrintError("Error: GetWallSurroundingValue got out of maze bounds coords (%d, %d).\n", x, y);
+        return -1; // Error value
+    }
+
+    return ((grid[x + 1][y] != PATH) << 0) +    // Right neighbor (Bit 0)
+           ((grid[x][y + 1] != PATH) << 1) +    // Top neighbor (Bit 1)
+           ((grid[x - 1][y] != PATH) << 2) +    // Left neighbor (Bit 2)
+           ((grid[x][y - 1] != PATH) << 3);     // Bottom neighbor (Bit 3)
 }
 
 void RedoInnerWalls(char **grid) {
+    if (grid == nullptr) {
+        PrintError("Error: RedoInnerWalls received a null grid pointer.\n");
+        return;
+    }
+
     for (int y = 1; y < GRID_HEIGHT - 1; y++) {
         for (int x = 1; x < GRID_WIDTH - 1; x++) {
             if (grid[x][y] == WALL) {
-                grid[x][y] = WALL_TYPE_BY_PATTERN[GetWallSurroundingValue(x, y, grid)];
+                int wallSurroundingValue = GetWallSurroundingValue(x, y, grid);
+                if (wallSurroundingValue != -1) {
+                    grid[x][y] = WALL_TYPE_BY_PATTERN[wallSurroundingValue];
+                }
             }
         }
     }
 }
 
 void RedoTopAndBottomWalls(char **grid) {
+    if (grid == nullptr) {
+        PrintError("Error: RedoTopAndBottomWalls received a null grid pointer.\n");
+        return;
+    }
+
     for (int x = 1; x < GRID_WIDTH - 1; x++) {
         //Top walls
         if (grid[x][1] == PATH) {
@@ -334,6 +463,11 @@ void RedoTopAndBottomWalls(char **grid) {
 }
 
 void RedoLeftAndRightWalls(char **grid) {
+    if (grid == nullptr) {
+        PrintError("Error: RedoLeftAndRightWalls received a null grid pointer.\n");
+        return;
+    }
+
     for (int y = 1; y < GRID_HEIGHT - 1; y++) {
         //Left walls
         if (grid[1][y] == PATH) {
@@ -351,6 +485,11 @@ void RedoLeftAndRightWalls(char **grid) {
 }
 
 void RedoOuterWalls(char **grid) {
+    if (grid == nullptr) {
+        PrintError("Error: RedoOuterWalls received a null grid pointer.\n");
+        return;
+    }
+
     // Refine the visual representation of the top and bottom border walls.
     RedoTopAndBottomWalls(grid);
     // Refine the visual representation of the left and right border walls.
@@ -364,6 +503,11 @@ void RedoOuterWalls(char **grid) {
 }
 
 void RedoWalls(char **grid) {
+    if (grid == nullptr) {
+        PrintError("Error: RedoWalls received a null grid pointer.\n");
+        return;
+    }
+
     // Apply visual refinement to the inner walls of the maze.
     RedoInnerWalls(grid);
     // Apply visual refinement to the outer walls, including borders and corners.

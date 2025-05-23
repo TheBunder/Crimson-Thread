@@ -1,20 +1,37 @@
 //----INCLUDES--------------------------------------------------------
 #include "include/Utils.h"
 
+#include "include/Visualizer.h"
+
 //----FUNCTIONS-------------------------------------------------------
 char **AllocateGrid() {
-	char **grid = new char *[GRID_WIDTH];
-	for (int i = 0; i < GRID_WIDTH; i++) {
-		grid[i] = new char[GRID_HEIGHT]();
+	try {
+		char **grid = new char *[GRID_WIDTH];
+		for (int i = 0; i < GRID_WIDTH; i++) {
+			grid[i] = new char[GRID_HEIGHT]();
+		}
+		return grid;
+	}catch (const std::bad_alloc &e) {
+		PrintError("Error: Failed to allocate grid memory.\n");
+		return nullptr;
 	}
-	return grid;
 }
 
 void DeallocateGrid(char** grid) {
+	if (grid == nullptr) {
+		return;
+	}
+
 	for (int i = 0; i < GRID_WIDTH; i++) {
 		delete[] grid[i];
 	}
 	delete[] grid;
+}
+
+int IsInArrayBounds(Point p)
+{
+	// Returns "true" if x and y are both in-bounds.
+	return IsInArrayBounds(p.x, p.y);
 }
 
 int IsInArrayBounds(int x, int y)

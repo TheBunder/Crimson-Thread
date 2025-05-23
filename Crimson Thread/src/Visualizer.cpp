@@ -16,6 +16,16 @@ void UnitColor() {
     printf("\033[38;5;226m");
 }
 
+void ErrorColor() {
+    // Color name: Red3 - 160
+    printf("\033[38;5;160m");
+}
+
+void WarningColor() {
+    // Color name: Yellow1 - 226
+    printf("\033[38;5;226m");
+}
+
 void ResetFG() {
     // Reset FG back to black
     printf("\033[0m");
@@ -32,13 +42,43 @@ void FinishedPathColor() {
 }
 
 void NextStationColor() {
-    // Color name: Gold3  - 178
+    // Color name: Gold3 - 178
     printf("\033[48;5;178m");
 }
 
 void ResetBG() {
     // Reset BG back to black
     printf("\033[48;5;0m");
+}
+
+void PrintError(const char* format, ...) {
+    ErrorColor(); // Set the error color
+    va_list args;
+
+    // Initialize the va_list to retrieve the arguments after 'format'
+    va_start(args, format);
+
+    // Print the formatted error
+    vfprintf(stderr, format, args);
+
+    // Free memorey
+    va_end(args);
+    ResetFG();
+}
+
+void PrintWarning(const char* format, ...) {
+    WarningColor(); // Set the warning color
+    va_list args;
+
+    // Fills the va_list with the arguments after 'format'
+    va_start(args, format);
+
+    // Print the formatted error
+    vfprintf(stderr, format, args);
+
+    // Free memorey
+    va_end(args);
+    ResetFG();
 }
 
 void PrintXAxis() {

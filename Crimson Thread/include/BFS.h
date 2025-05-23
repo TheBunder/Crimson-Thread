@@ -19,7 +19,7 @@ using std::vector;
 using std::queue;
 
 //----FUNCTION DECLARATIONS-------------------------------------
-void BFS(char **grid, LocationID startID, Point start, Point *importantPoints, int importantPointsSize,
+void BFS(char **grid, LocationID startID, Point start, vector<pair<LocationID, Point>> importantPoints,
          map<PathKey, vector<Point> > &pathsBetweenStations, mutex &pathMapMutex);
 
 #endif //BFS_H

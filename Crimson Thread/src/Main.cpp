@@ -14,26 +14,46 @@
 #include "include/Visualizer.h"
 
 //----FUNCTION PROTOTYPES---------------------------------------------
-bool EnableAnsiEscapeCodes();
+// Free all the space HS took.
 void DeallocateHostageStations(HostageStation **hostageStations, int numOfSections);
+
+// Print the info about all the HS
 void printHostageStationInfo(HostageStation **hostageStations, int numOfSections);
-void FillImportantPoints(Point *importantPoints, HostageStation **hostageStations, int numberStations,
-                         Point unitsStartingPosition);
-void ShowPlan(vector<vector<LocationID>> plan, HostageStation **hostageStations); // Show the plan the units will fallow
+
+void FillImportantPoints(vector<pair<LocationID, Point>> &importantPoints, HostageStation **hostageStations, int numberStations,
+                         Point unitsEntrance); // Insert all location and ID of valuable HS and the unit entrance.
+
+// Remove all points that are not reachable from the entrance.
+void RemoveUnreachablePoints(vector<pair<LocationID, Point>> &importantPoints,
+                        const map<PathKey, vector<Point> > &pathsBetweenStations);
+
+// Show each unit HS
+void ShowPlan(vector<vector<LocationID> > plan, HostageStation **hostageStations);
+
+// Show the plan the units will fallow
 void ExplainSigns(); // Explain the various marks and signs in the simulation
+
+void printImportantPoints(vector<pair<LocationID, Point>> &importantPoints) {
+    for (int i = 0; i < importantPoints.size(); i++) {
+        printf("Id: %d, ", importantPoints[i].first);
+    }
+}
 
 //----FUNCTIONS-------------------------------------------------------
 int main() {
     // prep
     system("CLS"); // Clear console
     auto startProgram = std::chrono::high_resolution_clock::now();
-	srand(time(0)); // seed random number generator.
-
+    srand(time(0)); // seed random number generator.
     // Set the console on a separate thread
     thread consoleThread(SetConsole);
 
     // variables
     char **grid = AllocateGrid();
+    if (grid == nullptr) {
+        PrintError("Error: Failed to allocate maze grid. Exiting.\n");
+        return -1;
+    }
     int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
     int numOfUnits = (rand() % 3) + 3;
 
@@ -42,23 +62,41 @@ int main() {
 
     // Generate simulation environment with the stations and units entrance.
     Point unitsEntrance = GenerateSimulationEnvironment(grid, hostageStations);
+    if (unitsEntrance == Point(-1, -1)) {
+        PrintError("Error: Failed to generate simulation environment. Exiting.\n");
+        DeallocateGrid(grid);
+        DeallocateHostageStations(hostageStations, numOfSections);
+        return -1;
+    }
 
     // Array that holds the points to all hostage station and the unit starting point.
-    Point *importantPoints = new Point[numOfSections + 1];
+    vector<pair<LocationID, Point>> importantPoints;
     FillImportantPoints(importantPoints, hostageStations, numOfSections, unitsEntrance);
+    if (!importantPoints.size()) {
+        PrintError("Error: Failed to generate important points.\n");
+        DeallocateGrid(grid);
+        DeallocateHostageStations(hostageStations, numOfSections);
+        return -1;
+    }
+    if (importantPoints.size() == 1) {
+        printf("There are no station worth the risk.");
+        DeallocateGrid(grid);
+        DeallocateHostageStations(hostageStations, numOfSections);
+        return -1;
+    }
 
     // Add a mutex to protect the map from concurrent access
     std::mutex pathMapMutex;
 
-    // Create a thread pool with hardware_concurrency threads (amount of cores in CPU)
+    // Create a thread pool with hardware_concurrency threads (number of cores in CPU)
     ThreadPool pool(std::thread::hardware_concurrency());
 
     // Find the best path between each one of the important points
-    for (LocationID i = 0; i < numOfSections + 1; i++) {
+    for (LocationID i = 0; i < importantPoints.size(); i++) {
         // Capture i by value to avoid issues with the loop variables changing
-        pool.Enqueue([i, &grid, &importantPoints, &pathsBetweenStations, &pathMapMutex, numOfSections]() {
+        pool.Enqueue([i, &grid, &importantPoints, &pathsBetweenStations, &pathMapMutex]() {
             // Calculate the path
-            BFS(grid, i, importantPoints[i], importantPoints, numOfSections+1, pathsBetweenStations, pathMapMutex);
+            BFS(grid, importantPoints[i].first, importantPoints[i].second, importantPoints,  pathsBetweenStations, pathMapMutex);
         });
     }
 
@@ -71,8 +109,9 @@ int main() {
     printf("Simulation environment creation & Path finding execution time: %f seconds\n", elapsedIteration.count());
 
     // Main algorithm
+    RemoveUnreachablePoints(importantPoints, pathsBetweenStations);
     auto startGA = std::chrono::high_resolution_clock::now();
-    vector<vector<LocationID>> answer = MainAlgorithm(pathsBetweenStations, numOfUnits, numOfSections , hostageStations);
+    vector<vector<LocationID> > answer = MainAlgorithm(pathsBetweenStations, importantPoints, numOfUnits, hostageStations);
 
     // Print GA running execution time
     auto endGA = std::chrono::high_resolution_clock::now();
@@ -96,41 +135,67 @@ int main() {
     // Visualize operation found
     system("CLS"); // Clear console
     ShowOperation(grid, numOfUnits, unitsEntrance, answer, pathsBetweenStations);
+    printf("Operation finished successfully, please press enter to finish the program");
     getchar();
 
     // Deallocate space
     DeallocateGrid(grid);
     DeallocateHostageStations(hostageStations, numOfSections);
-    delete[] importantPoints;
 }
 
-// Function to populate an array with the coordinates of important points,
-// including the units' starting position and all hostage stations.
-void FillImportantPoints(Point *importantPoints, HostageStation **hostageStations, int numberStations,
-                         Point unitsStartingPosition) {
-    // Assign the units' starting position as the first important point (at index 0).
-    importantPoints[0] = unitsStartingPosition;
+// Insert all the important points into the array and resize it.
+void FillImportantPoints(vector<pair<LocationID, Point>> &importantPoints, HostageStation **hostageStations, int numberStations,
+                         Point unitsEntrance) {
+    if (hostageStations == nullptr) {
+        PrintError("Error: FillImportantPoints received null hostageStations.\n");
+        return;
+    }
+
+    // Insert the units' starting position at the start.
+    importantPoints.emplace_back(-1, unitsEntrance);
 
     // Iterate through the hostage stations and add their coordinates from index 1.
-    for (int i = 1; i <= numberStations; i++) {
-        // Stor the station location
-        importantPoints[i] = hostageStations[i - 1]->GetCoords();
+    for (int i = 0; i < numberStations; i++) {
+        // Stor the station with valid locations and non-negative PValue
+        if (hostageStations[i]->GetCoords() != Point(-1, -1) && hostageStations[i]->GetPValue() >= 0) {
+            importantPoints.emplace_back(hostageStations[i]->GetSubgridAffiliation(),hostageStations[i]->GetCoords());
+        }
     }
 }
 
-void ShowPlan(const vector<vector<LocationID>> plan, HostageStation **hostageStations) {
+void RemoveUnreachablePoints(vector<pair<LocationID, Point>> &importantPoints, const map<PathKey, vector<Point> > &pathsBetweenStations) {
+    if (importantPoints.empty()) {
+        return;
+    }
+
+    std::vector<std::pair<LocationID, Point>> reachablePoints;
+
+    reachablePoints.push_back(importantPoints.at(0));
+    LocationID unitsEntranceID = importantPoints.at(0).first;
+
+    for (int i = 1; i < importantPoints.size(); i++) {
+        int distance = GetPathCost(importantPoints[0].first, importantPoints[i].first, pathsBetweenStations);
+        // Insert only reachable stations
+        if (distance && distance <= UNIT_STEP_BUDGET) {
+            reachablePoints.push_back(importantPoints.at(i));
+        }
+    }
+
+    importantPoints.swap(reachablePoints);
+}
+
+void ShowPlan(const vector<vector<LocationID> > plan, HostageStation **hostageStations) {
     for (int u = 0; u < plan.size(); ++u) {
         UnitColor();
         printf("------Unit number #%d plan:------\n", u);
         if (plan[u].size() == 1) {
             ResetFG();
             printf("No stations assigned\n");
-        }
-        else {
+        } else {
             // Print info about each of the stations
             HostagesColor();
             for (int s = 1; s < plan[u].size(); ++s) {
-                hostageStations[plan[u][s]-1]->PrintInfo();
+                hostageStations[plan[u][s]]->PrintInfo();
             }
         }
     }

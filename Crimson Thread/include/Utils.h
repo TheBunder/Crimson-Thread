@@ -68,7 +68,7 @@ typedef struct Point {
     Point(int x_val, int y_val) : x(x_val), y(y_val) {}
 
     // Default constructor (no arguments)
-    Point() : x(0), y(0) {} // Initialize x and y to some default values
+    Point() : x(-1), y(-1) {} // Initialize x and y to some default values
 
     // Overloaded equality operator (==)
     bool operator==(const Point& other) const {
@@ -92,7 +92,8 @@ typedef struct Point {
 //----FUNCTION DECLARATIONS------------------------------------------
 char** AllocateGrid(); // Allocate the grid used for the simulation
 void DeallocateGrid(char** grid); // Deallocate the grid used for the simulation
-int IsInArrayBounds(int x, int y); // Check if the x and y points are in the array
+int IsInArrayBounds(Point p); // Check if the point is in the array
+int IsInArrayBounds(int x, int y); // Check if the x and y are in the array
 PathKey MakeKey(LocationID id1, LocationID id2); // Function to ensure consistent key ordering
 
 #endif // UTILS
