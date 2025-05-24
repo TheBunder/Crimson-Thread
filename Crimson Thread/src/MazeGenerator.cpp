@@ -98,8 +98,8 @@ bool IsUnvisited(char** grid, int x, int y) {
         for (int j = -1; j <= 1; j++) {
             int newX = x + i;
             int newY = y + j;
-            if (IsInArrayBounds(newX, newY)) {
-                if (grid[newX][newY] != WALL) return false;
+            if (IsInArrayBounds(newX, newY) && grid[newX][newY] != WALL) {
+                return false;
             }
         }
     }

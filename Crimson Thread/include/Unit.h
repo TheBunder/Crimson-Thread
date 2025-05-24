@@ -9,7 +9,7 @@ private:
     queue<Point> path{}; // The path the unit will take
     queue<Point> stationsCoords{}; // The location of each of the stations the unit will save
     bool finishedMission = false;
-    Point previousCoords;
+    Point previousCoords = Point(1, 1);
 
     void SetStationsCoords(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations);
     void SetPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations);

@@ -1,11 +1,19 @@
 #include <utility>
 #include "../include/Unit.h"
 #include "../include/Utils.h"
+#include "include/Visualizer.h"
 
 void Unit::SetPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations) {
-    // If the operation order contains only one location (just the starting point),
-    // the mission is considered finished immediately.
-    if (operationOrder.size() == 1) {
+    if (operationOrder.empty()) {
+        PrintWarning("Warning: SetPath got an empty path");
+    }
+    // If the operation order have only one location (entrance), the unit is done.
+    if (operationOrder.size() <= 1) {
+        finishedMission = true;
+        return;
+    }
+    if (pathsBetweenStations.empty()) {
+        PrintError("Error: SetPath got an empty pathsBetweenStations");
         finishedMission = true;
         return;
     }
@@ -42,6 +50,12 @@ queue<Point> Unit::GetPath() {
 }
 
 void Unit::SetStationsCoords(vector<LocationID> &operationOrder, map<PathKey, vector<Point> > &pathsBetweenStations) {
+    if (pathsBetweenStations.empty()) {
+        PrintError("Error: SetStationsCoords got an empty pathsBetweenStations");
+        finishedMission = true;
+        return;
+    }
+
     PathKey key;
     // Iterate through the operation order, considering pairs of adjacent location IDs
     for (int i = 1; i < operationOrder.size(); ++i) {
@@ -78,6 +92,11 @@ void Unit::SetCoords(Point newPos) {
 }
 
 bool Unit::Move(char** grid) {
+    if (grid == nullptr) {
+        PrintError("Error: Move received a null grid pointer.\n");
+        return false;
+    }
+
     bool goingToNewStation = false;
 
     // Remember where the unit was to remove from the grid

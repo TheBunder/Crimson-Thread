@@ -90,6 +90,11 @@ void PrintXAxis() {
 }
 
 void PrintGrid(char **grid) {
+    if (grid == nullptr) {
+        PrintError("Error: PrintGrid received a null grid pointer.\n");
+        return;
+    }
+
     // Print top X axis
     PrintXAxis();
 
@@ -121,55 +126,16 @@ void PrintGrid(char **grid) {
     PrintXAxis();
 }
 
-void PrintGridWithPath(char **grid, char **navGrid, vector<Point> path) {
-    for (Point coord: path) {
-        navGrid[coord.x][coord.y] = kPath;
-    }
-    char fBGChanged = 0;
-    for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
-        // Print left Y axis
-        printf("%02d ", y % 100); // Print Y coordinate (mod 100)
-
-        for (int x = 0; x < GRID_WIDTH; x++) {
-            if (navGrid[x][y] == kPath) {
-                // Mark path by changing BG color
-                PathColor();
-                fBGChanged = 1;
-            }
-
-            // Check if wall or path
-            if ((unsigned char) grid[x][y] > 100 || grid[x][y] == PATH) {
-                putchar(grid[x][y]);
-            } else {
-                // Print with specific color
-                if (grid[x][y] == HOSTAGES) {
-                    HostagesColor();
-                } else {
-                    UnitColor();
-                }
-                putchar(grid[x][y]);
-                ResetFG();
-            }
-            if (fBGChanged) {
-                ResetBG();
-                fBGChanged >>= 1; // make zero
-            }
-        }
-
-        // Print right Y axis
-        printf(" %02d\n", y % 100);
-    }
-
-
-    // Reset the path mark
-    for (Point coord: path) {
-        navGrid[coord.x][coord.y] = kEmpty;
-    }
-
-    printf("\n");
-}
-
 void PrintGridWithPath(char **grid, char **navGrid) {
+    if (grid == nullptr) {
+        PrintError("Error: PrintGridWithPath received a null grid pointer.\n");
+        return;
+    }
+    if (navGrid == nullptr) {
+        PrintError("Error: PrintGridWithPath received a null navGrid pointer.\n");
+        return;
+    }
+
     bool fBGChanged = false;
     for (int y = GRID_HEIGHT - 1; y >= 0; y--) {
         // Print left Y axis
@@ -217,6 +183,14 @@ void PrintGridWithPath(char **grid, char **navGrid) {
 }
 
 void PrintCharInGrid(int x, int y, char **navGrid, char c) {
+    if (navGrid == nullptr) {
+        PrintError("Error: PrintCharInGrid received a null navGrid pointer.\n");
+        return;
+    }
+    if (!IsInArrayBounds(x, y)) {
+        PrintError("Error: PrintCharInGrid called with out-of-bounds initial coordinates (%d, %d).\n", x, y);
+        return;
+    }
     // Set background color
     if (navGrid[x][y] == -1) {
         // Mark finished path by changing BG color
@@ -247,9 +221,18 @@ void PrintCharInGrid(int x, int y, char **navGrid, char c) {
 }
 
 void MarkPath(vector<Unit> units, char **navGrid) {
+    if (navGrid == nullptr) {
+        PrintError("Error: MarkPath received a null navGrid pointer.\n");
+        return;
+    }
+
     for (Unit unit: units) {
         queue<Point> q = unit.GetPath();
         while (!q.empty()) {
+            if (!IsInArrayBounds(q.front())) {
+                PrintError("Error: MarkPath called with out-of-bounds point in path.\n");
+                return;
+            }
             navGrid[q.front().x][q.front().y]++;
             q.pop();
         }
@@ -257,14 +240,31 @@ void MarkPath(vector<Unit> units, char **navGrid) {
 
     // Mark each unit first objective
     for (Unit unit : units) {
+        if (!IsInArrayBounds(unit.GetNextStationCoords())) {
+            PrintError("Error: MarkPath called with first station out-of-bounds.\n");
+            return;
+        }
         Point unitFirstStation = unit.GetNextStationCoords();
         navGrid[unitFirstStation.x][unitFirstStation.y] = -2;
     }
 }
 
 void ShowNextFrame(char **grid, vector<Unit> units, char **navGrid, HANDLE hConsole) {
+    if (grid == nullptr || navGrid == nullptr) {
+        PrintError("Error: ShowNextFrame received a null grid or navGrid pointer.\n");
+        return;
+    }
+    if (hConsole == nullptr) {
+        PrintError("Error: ShowNextFrame received a null hConsole .\n");
+        return;
+    }
+
     // Add units
     for (Unit unit: units) {
+        if (!IsInArrayBounds(unit.GetCoords())) {
+            PrintError("Error: MarkPath called with out-of-bounds point in path.\n");
+            return;
+        }
         // Get position to change
         int unitX = unit.GetX();
         int unitY = unit.GetY();
@@ -279,6 +279,11 @@ void ShowNextFrame(char **grid, vector<Unit> units, char **navGrid, HANDLE hCons
 
     // Remove units and their path mark
     for (Unit unit: units) {
+        if (!IsInArrayBounds(unit.GetPreviousCoords())) {
+            PrintError("Error: MarkPath called with out-of-bounds previous point.\n");
+            return;
+        }
+
         // Get position to change
         Point previousCoords = unit.GetPreviousCoords();
         int unitX = previousCoords.x;
@@ -300,12 +305,28 @@ void ShowNextFrame(char **grid, vector<Unit> units, char **navGrid, HANDLE hCons
 
 void CreatUnits(vector<Unit> &units, int numOfUnits, Point unitsEntrance, vector<vector<LocationID> > &OperationOrder,
                 map<PathKey, vector<Point> > &pathsBetweenStations) {
+    if (numOfUnits < 1) {
+        PrintWarning("Warning: CreatUnits received nun-positive numOfUnits");
+    }
     for (int i = 0; i < numOfUnits; i++) {
         units.emplace_back(unitsEntrance, OperationOrder[i], pathsBetweenStations);
     }
 }
 
 void MarkNextStation(char **grid, HANDLE hConsole, Point newStationLocation, char **navGrid) {
+    if (grid == nullptr || navGrid == nullptr) {
+        PrintError("Error: ShowNextFrame received a null grid or navGrid pointer.\n");
+        return;
+    }
+    if (hConsole == nullptr) {
+        PrintError("Error: ShowNextFrame received a null hConsole .\n");
+        return;
+    }
+    if (!IsInArrayBounds(newStationLocation)) {
+        PrintError("Error: MarkNextStation called with out-of-bound next station.\n");
+        return;
+    }
+
     navGrid[newStationLocation.x][newStationLocation.y] = -2; // Mark on the navGrid
 
     // Mark on the screen
@@ -318,6 +339,19 @@ void MarkNextStation(char **grid, HANDLE hConsole, Point newStationLocation, cha
 
 void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vector<LocationID> > &OperationOrder,
                    map<PathKey, vector<Point> > &pathsBetweenStations) {
+    if (grid == nullptr) {
+        PrintError("Error: ShowOperation received a null grid pointer.\n");
+        return;
+    }
+    if (numOfUnits < 1) {
+        PrintWarning("Warning: ShowOperation received nun-positive numOfUnits");
+        return;
+    }
+    if (OperationOrder.empty()) {
+        PrintWarning("Warning: ShowOperation received empty list of operation order.\n");
+        return;
+    }
+
     // Get console handle
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -327,6 +361,10 @@ void ShowOperation(char **grid, int numOfUnits, Point unitsEntrance, vector<vect
 
     // Allocate and fill grid
     char **navGrid = AllocateGrid();
+    if (navGrid == nullptr) {
+        PrintError("Error: ShowOperation couldn't allocate navGrid.\n");
+        return;
+    }
 
     // Set default navigation grid
     for (int i = 0; i < GRID_WIDTH; ++i) {
