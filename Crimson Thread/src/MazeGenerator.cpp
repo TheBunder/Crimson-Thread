@@ -236,8 +236,8 @@ void BreakWalls(char **grid) {
             }
 
             // Convert the number into a 2D location (x, y).
-            x = location % GRID_WIDTH;
-            y = location / GRID_WIDTH;
+            x = location / GRID_HEIGHT;
+            y = location % GRID_HEIGHT;
 
             // Check if the current grid cell is a WALL and if it is suitable for breaking.
             if (grid[x][y] == WALL && IsBreakable(x, y, grid)) {

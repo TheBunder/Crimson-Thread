@@ -52,6 +52,7 @@ int main() {
     char **grid = AllocateGrid();
     if (grid == nullptr) {
         PrintError("Error: Failed to allocate maze grid. Exiting.\n");
+        getchar();
         return -1;
     }
     int numOfSections = (GRID_WIDTH / SUBGRID_SIZE) * (GRID_HEIGHT / SUBGRID_SIZE);
@@ -66,6 +67,7 @@ int main() {
         PrintError("Error: Failed to generate simulation environment. Exiting.\n");
         DeallocateGrid(grid);
         DeallocateHostageStations(hostageStations, numOfSections);
+        getchar();
         return -1;
     }
 
@@ -76,12 +78,14 @@ int main() {
         PrintError("Error: Failed to generate important points.\n");
         DeallocateGrid(grid);
         DeallocateHostageStations(hostageStations, numOfSections);
+        getchar();
         return -1;
     }
     if (importantPoints.size() == 1) {
         printf("There are no station worth the risk.");
         DeallocateGrid(grid);
         DeallocateHostageStations(hostageStations, numOfSections);
+        getchar();
         return -1;
     }
 
