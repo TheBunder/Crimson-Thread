@@ -33,12 +33,6 @@ void ShowPlan(vector<vector<LocationID> > plan, HostageStation **hostageStations
 // Show the plan the units will fallow
 void ExplainSigns(); // Explain the various marks and signs in the simulation
 
-void printImportantPoints(vector<pair<LocationID, Point>> &importantPoints) {
-    for (int i = 0; i < importantPoints.size(); i++) {
-        printf("Id: %d, ", importantPoints[i].first);
-    }
-}
-
 //----FUNCTIONS-------------------------------------------------------
 int main() {
     // prep
@@ -74,7 +68,7 @@ int main() {
     // Array that holds the points to all hostage station and the unit starting point.
     vector<pair<LocationID, Point>> importantPoints;
     FillImportantPoints(importantPoints, hostageStations, numOfSections, unitsEntrance);
-    if (!importantPoints.size()) {
+    if (importantPoints.empty()) {
         PrintError("Error: Failed to generate important points.\n");
         DeallocateGrid(grid);
         DeallocateHostageStations(hostageStations, numOfSections);
@@ -116,6 +110,10 @@ int main() {
     RemoveUnreachablePoints(importantPoints, pathsBetweenStations);
     auto startGA = std::chrono::high_resolution_clock::now();
     vector<vector<LocationID> > answer = MainAlgorithm(pathsBetweenStations, importantPoints, numOfUnits, hostageStations);
+    if (answer.empty()) {
+        PrintError("Error: Failed to creat an answer using the GA. Exiting.\n");
+        getchar();
+    }
 
     // Print GA running execution time
     auto endGA = std::chrono::high_resolution_clock::now();
@@ -206,7 +204,7 @@ void ShowPlan(const vector<vector<LocationID> > plan, HostageStation **hostageSt
 
     ResetFG();
 
-    printf("\nTo continue to the visualization proses, please press any button");
+    printf("\nTo continue to the visualization proses, please press enter");
     getchar();
 }
 
@@ -230,13 +228,16 @@ void ExplainSigns() {
     FinishedPathColor();
     printf("              \n");
     ResetBG();
+    printf("Stations that are next to be collected or were already collected will be marked with: ");
+    NextStationColor();
+    printf("              \n");
+    ResetBG();
 
-    printf("\nPlease press any key to start the visualization of the best plan the genetic algorithm found\n");
+    printf("\nPlease press enter to start the visualization of the best plan the genetic algorithm found\n");
     getchar();
 }
 
-// Deallocate the memory used by an array of HostageStation objects
-// and the array of pointers itself.
+// Deallocate the memory used by an array of HostageStation objects and the array itself.
 void DeallocateHostageStations(HostageStation **hostageStations, int numOfSections) {
     for (int i = 0; i < numOfSections; i++) {
         delete hostageStations[i];

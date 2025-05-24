@@ -1,24 +1,26 @@
 #include "include/ThreadPool.h"
+#include "include/Visualizer.h"
 
 ThreadPool::ThreadPool(unsigned int num_threads)
 {
-    // Creating worker threads
+    if (num_threads > std::thread::hardware_concurrency() + 3) {
+        PrintWarning("Warning: constructed ThreadPoll with higher thread amount then CPU core.");
+    }
+
+    // Creat all the recuested threads
     for (int i = 0; i < num_threads; ++i) {
         threads_.emplace_back([this] {
             while (true) {
                 std::function<void()> task;
-                // The reason for putting the below code here is to unlock the queue
-                // before executing the task so that other threads can perform enqueue tasks
                 {
-                    // Locking the queue so that data can be shared safely
                     std::unique_lock<std::mutex> lock(queue_mutex_);
 
-                    // Waiting until there is a task to execute or the pool is stopped
+                    // Waiting for task or for distractor
                     cv_.wait(lock, [this] {
                         return !tasks_.empty() || stop_;
                     });
 
-                    // exit the thread in case the pool is stopped and there are no tasks
+                    // stop the loop if there are no tasks and the pool is being distracted
                     if (stop_ && tasks_.empty()) {
                         return;
                     }
@@ -27,7 +29,7 @@ ThreadPool::ThreadPool(unsigned int num_threads)
                     task = std::move(tasks_.front());
                     tasks_.pop();
                 }
-
+                // Other threads will be abel to use the queue will task() is running
                 task();
             }
         });
@@ -37,15 +39,14 @@ ThreadPool::ThreadPool(unsigned int num_threads)
 ThreadPool::~ThreadPool()
 {
     {
-        // Lock the queue to update the stop flag safely
         std::unique_lock<std::mutex> lock(queue_mutex_);
         stop_ = true;
     }
 
-    // Notify all threads
+    // Wake up all threads
     cv_.notify_all();
 
-    // Joining all worker threads to ensure they have completed their tasks
+    // Joining all threads to make sure the system waits for them all
     for (auto& thread : threads_) {
         thread.join();
     }
@@ -58,9 +59,9 @@ void ThreadPool::Enqueue(std::function<void()> task)
         // Increment active tasks count
         active_tasks_++;
 
-        // Wrap the task to track completion
+        // Wrap the task so calling it will also update the queue
         auto wrapped_task = [this, task = std::move(task)]() {
-            // Execute the original task
+            // Call task
             task();
 
             // Decrement active tasks and notify if all tasks are done
@@ -70,7 +71,7 @@ void ThreadPool::Enqueue(std::function<void()> task)
                 remaining = --active_tasks_;
             }
 
-            // If this was the last task, notify anyone waiting
+            // If this was the last task, notify
             if (remaining == 0) {
                 tasks_done_cv_.notify_all();
             }

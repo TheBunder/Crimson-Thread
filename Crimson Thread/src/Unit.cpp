@@ -19,7 +19,7 @@ void Unit::SetPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point
     }
 
     PathKey key;
-    // Iterate through the operation order, considering pairs of adjacent location IDs
+
     for (int i = 1; i < operationOrder.size(); ++i) {
         // Create a key to look up the pre-calculated path segment between locations
         key = MakeKey(operationOrder[i - 1], operationOrder[i]);
@@ -28,7 +28,7 @@ void Unit::SetPath(vector<LocationID> &operationOrder, map<PathKey, vector<Point
 
         // Determine the direction to traverse the path vector based on the order of IDs
         if (operationOrder[i - 1] < operationOrder[i]) {
-            // Traverse path forwards,
+            // Traverse path forwards
             // For the first path segment, include the starting point
             int startIndex = (i == 1) ? 0 : 1;
 
@@ -57,7 +57,7 @@ void Unit::SetStationsCoords(vector<LocationID> &operationOrder, map<PathKey, ve
     }
 
     PathKey key;
-    // Iterate through the operation order, considering pairs of adjacent location IDs
+
     for (int i = 1; i < operationOrder.size(); ++i) {
         // Create a key to look up the pre-calculated path segment between locations
         key = MakeKey(operationOrder[i - 1], operationOrder[i]);

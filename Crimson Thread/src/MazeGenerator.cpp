@@ -36,7 +36,7 @@ void BreakWalls(char **grid); // After the maze was made, it breaks additional p
 void RedoWalls(char **grid); // Convert the walls from the default version to a better looking tiles
 void FillWithDefaultStations(HostageStation **hostageStation); // fill the entire hostages array with default values
 void InsertHostages(char **grid,
-                    HostageStation **hostageStations); // Add people (Hostages and\or kidnappers) to the maze
+                    HostageStation **hostageStations); // Add Hostage stations to the maze
 Point InsertUnitEntrance(char **grid); // Find a good position for the units to start.
 
 //----FUNCTIONS-------------------------------------------------------
@@ -401,7 +401,7 @@ Point InsertUnitEntrance(char **grid) {
         }
     }
 
-    // Handling the case where no entrance point is found. Even tho {1,1} will always be path.
+    // Handling the case where no entrance point is found.
     PrintError("Error: No suitable entrance location was found.\n");
     return {-1, 1};
 }

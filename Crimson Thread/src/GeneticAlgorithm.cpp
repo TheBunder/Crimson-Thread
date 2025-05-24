@@ -281,7 +281,7 @@ void InsertEntranceToPath(Chromosome *chromosome, int unit, const vector<pair<Lo
 
 void InsertStationToPath(Chromosome *chromosome, int unit, LocationID station,
                          const map<PathKey, vector<Point> > &pathsBetweenStations) {
-    if (chromosome == nullptr || unit < 0 || station < 0 || pathsBetweenStations.empty()) {
+    if (chromosome == nullptr || station < 0 || pathsBetweenStations.empty()) {
         PrintError("Error: InsertStationToPath received invalid parameters\n");
         return;
     }
@@ -474,8 +474,7 @@ void EvaluatePopulationFitness(Chromosome **chromosomeArray, const map<PathKey, 
         } else {
             // Check if the chromosome needs fitness evaluation.
             if (chromosomeArray[i]->needsFitnessEvaluation) {
-                // Submit a task to the thread pool to calculate fitness for this chromosome.
-                // Capture i by value and use references for the constant data
+                // Use the thread pool to calculate to multiple chromosome their fitness.
                 pool.Enqueue([i, chromosomeArray, &pathsBetweenStations, hostageStations]() {
                     CalculateFitness(chromosomeArray[i], pathsBetweenStations, hostageStations);
                 });
@@ -559,8 +558,7 @@ void Crossover(Chromosome **matingPool, Chromosome **nextGeneration, int numOfUn
                     child1->needsFitnessEvaluation = true;
                     child2->needsFitnessEvaluation = true;
                 } else {
-                    // No crossover: Simply copy the parents' entire path structure
-                    // Fitness is the same as parents', no recalculation needed
+                    // No crossover: Simply copy the parents' entire data
                     child1->needsFitnessEvaluation = parent1->needsFitnessEvaluation;
                     child2->needsFitnessEvaluation = parent2->needsFitnessEvaluation;
                     child1->isValid = parent1->isValid;
@@ -588,7 +586,6 @@ LocationID FindRandomUnusedStation(const Chromosome *chromosome,
     // Collect all used LocationIDs in the chromosome
     std::set<LocationID> usedStations;
     for (const vector<LocationID> &path: chromosome->unitPaths) {
-        // Assuming path starts at index 0, include all stations in the path
         for (const LocationID stationID: path) {
             usedStations.insert(stationID);
         }
@@ -618,8 +615,7 @@ LocationID FindRandomUnusedStation(const Chromosome *chromosome,
 }
 
 bool AddStationToRandomUnitPath(Chromosome *chromosome, const vector<pair<LocationID, Point> > &importantPoints,
-                                int numOfUnits,
-                                const map<PathKey, vector<Point> > &pathsBetweenStations) {
+                                int numOfUnits, const map<PathKey, vector<Point> > &pathsBetweenStations) {
     if (chromosome == nullptr || importantPoints.empty() || numOfUnits < 1 || pathsBetweenStations.empty()) {
         PrintError("Error: AddStationToRandomUnitPath received invalid parameters\n");
         return false;
@@ -886,12 +882,10 @@ void OrderPathBruteForce(vector<LocationID> &path, const map<PathKey, vector<Poi
         PrintWarning("Warning: OrderPathBruteForce received an empty path\n");
         return;
     }
-
     // If there are no other locations to visit, the path is just the entrance.
     if (path.size() == 1) {
         return;
     }
-
     if (pathsBetweenStations.empty()) {
         PrintError("Error: OrderPathBruteForce received an empty pathsBetweenStations");
     }

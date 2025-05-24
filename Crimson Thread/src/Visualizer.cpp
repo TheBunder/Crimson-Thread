@@ -278,7 +278,7 @@ void ShowNextFrame(char **grid, vector<Unit> units, char **navGrid, HANDLE hCons
     }
 
     // Remove units and their path mark
-    for (Unit unit: units) {
+    for (const Unit& unit: units) {
         if (!IsInArrayBounds(unit.GetPreviousCoords())) {
             PrintError("Error: MarkPath called with out-of-bounds previous point.\n");
             return;

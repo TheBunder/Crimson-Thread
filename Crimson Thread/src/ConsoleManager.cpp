@@ -11,21 +11,18 @@
 int GetConsoleWindowHeight() {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hConsole == INVALID_HANDLE_VALUE) {
-        // Use fprintf to stderr for error messages
         PrintError("Error: Could not get console handle in GetConsoleWindowHeight. Code: %lu\n", GetLastError());
         return -1; // Indicate an error
     }
 
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     if (!GetConsoleScreenBufferInfo(hConsole, &csbi)) {
-        // Use fprintf to stderr for error messages
         PrintError("Error: Could not get console screen buffer info in GetConsoleWindowHeight. Code: %lu\n",
                 GetLastError());
         return -1; // Indicate an error
     }
 
-    // Calculate height from the visible window rectangle
-    // srWindow.Bottom and srWindow.Top are 0-based, so we add 1 for the total number of rows
+    // Calculate height (height start from zero)
     return csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
 }
 
@@ -44,8 +41,7 @@ int GetConsoleWindowWidth() {
         return -1;
     }
 
-    // Calculate width from the visible window rectangle
-    // srWindow.Right and srWindow.Left are 0-based, so we add 1 for the total number of columns
+    // Calculate width (width start from zero)
     return csbi.srWindow.Right - csbi.srWindow.Left + 1;
 }
 
@@ -127,41 +123,6 @@ void SimulateF11Fullscreen() {
 
     SendInput(ARRAYSIZE(inputs), inputs, sizeof(INPUT));
 }
-/*
-//  Enables ANSI escape code processing on Windows console.
-// Returns true if successful, false otherwise.
-bool EnableAnsiEscapeCodes() {
-    // Get a handle to the standard output device (the console)
-    HANDLE stdOutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (stdOutputHandle == INVALID_HANDLE_VALUE) {
-        fprintf(stderr, "Error getting standard output handle.\n");
-        return false;
-    }
-
-    // Get the current console mode flags
-    DWORD consoleMode = 0;
-    if (!GetConsoleMode(stdOutputHandle, &consoleMode)) {
-        fprintf(stderr, "Error getting console mode.\n");
-        return false;
-    }
-
-    // Check if ANSI processing is already enabled
-    if (consoleMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) {
-        // Already enabled, nothing to do
-        return true;
-    }
-
-    // Set the ENABLE_VIRTUAL_TERMINAL_PROCESSING flag
-    consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
-    // Set the new console mode
-    if (!SetConsoleMode(stdOutputHandle, consoleMode)) {
-        fprintf(stderr, "Error setting console mode. This may require Windows 10 or newer.\n");
-        return false;
-    }
-
-    return true;
-}*/
 
 bool GetCurrentConsoleDimensions(int& height, int& width) {
     height = GetConsoleWindowHeight();
@@ -286,10 +247,10 @@ void SetConsole() {
 
     printf("Attempting to adjust console height to fit the grid.\n", targetHeight);
 
-    // Step 1: make the grid as big as it can and still\ close to fit.
+    // make the grid as big as it can and still\ close to fit.
     bool success =ZoomInToEnlarge(targetHeight, targetWidth, tolerance, maxAttempts, sleepDuration);
 
-    // Step 2: Make the grid as small as it needs to fit. We try to do step 2 even if step 1 failed.
+    // Make the grid as small as it needs to fit. We try to do step 2 even if step 1 failed.
     success &= ZoomOutToFit(targetHeight, targetWidth, tolerance, maxAttempts, sleepDuration);
 
     if (success) {

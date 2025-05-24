@@ -17,6 +17,7 @@ void PrintWarning(const char* format, ...);
 void ResetFG();
 void PathColor();
 void FinishedPathColor();
+void NextStationColor();
 void ResetBG();
 
 #endif //VISUALIZER_H
